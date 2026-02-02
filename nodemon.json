@@ -1,0 +1,11 @@
+{
+  "watch": [
+    "src"
+  ],
+  "ext": "ts",
+  "exec": "node --no-deprecation -r ts-node/register/transpile-only src/server.ts",
+  "ignore": [
+    "src/**/*.test.ts",
+    "node_modules"
+  ]
+}
