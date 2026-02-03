@@ -64,6 +64,38 @@ router.post("/user/login", AuthController.userLogin);
 
 /**
  * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: User Register
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [first_name, last_name, email, password, phone]
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *               last_name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Register successful
+ *       400:
+ *         description: Validation error or User exists
+ */
+router.post("/register", AuthController.register);
+
+/**
+ * @swagger
  * /token/refresh:
  *   post:
  *     summary: Refresh Access Token

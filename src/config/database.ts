@@ -13,7 +13,7 @@ if (!dbUrl) {
 
 const db = new Sequelize(dbUrl, {
     dialect: "postgres",
-    logging: false, // Set console.log to see SQL queries
+    logging: console.log, // Set console.log to see SQL queries
     //   dialectOptions: {
     //       ssl: {
     //           require: true,

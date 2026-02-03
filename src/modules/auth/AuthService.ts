@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { Op } from "sequelize";
 import Users from "../user/models/UserModel";
 import { ACCESS_SECRET, REFRESH_SECRET } from "../../config/env";
 
@@ -21,9 +22,18 @@ export const signRefresh = (user: Users, aud: string) => {
     );
 };
 
-export const loginUser = async (email: string, password: string, isAdmin: boolean) => {
-    const user = await Users.findOne({ where: { email } });
-    if (!user) throw new Error("Email atau password salah");
+export const loginUser = async (emailOrPhone: string, password: string, isAdmin: boolean) => {
+    // Search user by email OR phone
+    // We assume the input 'email' from controller might be a phone number
+    const user = await Users.findOne({
+        where: {
+            [Op.or]: [
+                { email: emailOrPhone },
+                { no_telp: emailOrPhone }
+            ]
+        }
+    });
+    if (!user) throw new Error("Email/Phone atau password salah");
 
     const role = String(user.role || "").toLowerCase();
 
@@ -37,6 +47,54 @@ export const loginUser = async (email: string, password: string, isAdmin: boolea
     if (!ok) throw new Error("Email atau password salah");
 
     return user;
+};
+
+export const registerUser = async (data: any) => {
+    const { first_name, last_name, email, password, phone } = data;
+    console.log("DEBUG: Service Register Data:", data); // Check if phone is here
+
+    // Check if user exists
+    const existingUser = await Users.findOne({
+        where: {
+            [Op.or]: [
+                { email },
+                { no_telp: phone }
+            ]
+        }
+    });
+
+    if (existingUser) {
+        if (existingUser.email === email) throw new Error("Email sudah terdaftar");
+        if (existingUser.no_telp === phone) throw new Error("Nomor HP sudah terdaftar");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const name = `${first_name} ${last_name}`;
+
+    const payload = {
+        firstName: first_name,
+        lastName: last_name,
+        name,
+        email,
+        phone: phone
+    };
+
+    // TEMPORARY DEBUG: Throw error to see data in frontend
+    // throw new Error(`DEBUG DATA: ${JSON.stringify(payload)}`);
+
+    const newUser = await Users.create({
+        firstName: first_name,
+        lastName: last_name,
+        name,
+        email,
+        password: hashedPassword,
+        no_telp: phone,
+        status: "active",
+        role: "user",
+        images: "/images/avatar/default-avatar.png" // Default avatar
+    });
+
+    return newUser;
 };
 
 export const verifyRefreshToken = async (token: string, audExpected: string) => {

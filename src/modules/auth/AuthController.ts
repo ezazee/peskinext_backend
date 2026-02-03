@@ -54,6 +54,30 @@ export const userLogin = async (req: Request, res: Response) => {
     }
 };
 
+export const register = async (req: Request, res: Response) => {
+    try {
+        const { first_name, last_name, email, password, phone } = req.body;
+        console.log("DEBUG: Controller Register Body:", req.body); // Check if phone is here
+
+        if (!first_name || !last_name || !email || !password || !phone) {
+            return res.status(400).json({ message: "Semua field harus diisi" });
+        }
+
+        const user = await AuthService.registerUser({ first_name, last_name, email, password, phone });
+
+        // Auto login response (optional, or just success message)
+        // Let's return success and let frontend call login or we can return token here too.
+        // For consistency with current frontend flow (which calls login separately), just return success.
+
+        return res.status(201).json({
+            message: "Registrasi berhasil",
+            user: { id: user.id, email: user.email, name: user.name }
+        });
+    } catch (error: any) {
+        return res.status(400).json({ message: error.message });
+    }
+};
+
 export const refreshToken = async (req: Request, res: Response) => {
     try {
         const raw = req.cookies?.admin_refresh_token || req.cookies?.user_refresh_token;

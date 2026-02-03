@@ -3,8 +3,8 @@ import db from "../../../config/database";
 
 interface UserAttributes {
     id: string;
-    first_name?: string;
-    last_name?: string;
+    firstName?: string;
+    lastName?: string;
     name?: string;
     slug?: string;
     email: string;
@@ -26,8 +26,8 @@ interface UserCreationAttributes extends Optional<UserAttributes, "id" | "status
 
 class Users extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
     public id!: string;
-    public first_name!: string;
-    public last_name!: string;
+    public firstName!: string;
+    public lastName!: string;
     public name!: string;
     public slug!: string;
     public email!: string;
@@ -48,17 +48,18 @@ class Users extends Model<UserAttributes, UserCreationAttributes> implements Use
 Users.init(
     {
         id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
-        first_name: { type: DataTypes.STRING },
-        last_name: { type: DataTypes.STRING },
-        name: { type: DataTypes.STRING },
-        slug: { type: DataTypes.STRING },
+        firstName: { type: DataTypes.STRING, field: "first_name" },
+        lastName: { type: DataTypes.STRING, field: "last_name" },
+        name: { type: DataTypes.STRING, field: "name" },
+        slug: { type: DataTypes.STRING, field: "slug" },
         email: {
             type: DataTypes.STRING,
             allowNull: false,
             unique: true,
-            validate: { isEmail: true }
+            validate: { isEmail: true },
+            field: "email"
         },
-        no_telp: { type: DataTypes.STRING(20) },
+        no_telp: { type: DataTypes.STRING(20), field: "no_telp" },
         email_verified_at: { type: DataTypes.DATE },
         password: { type: DataTypes.STRING },
         status: {
@@ -83,12 +84,20 @@ Users.init(
         tableName: "users",
         freezeTableName: true,
         timestamps: true,
-        underscored: true,
+        // underscored: true, // Removed to rely on explicit field mapping
         createdAt: "created_at",
         updatedAt: "updated_at",
         indexes: [
             { unique: true, fields: ["email"] },
-        ]
+        ],
+        hooks: {
+            beforeCreate: (user: Users) => {
+                if (user.name) {
+                    const slugify = require("slugify");
+                    user.slug = slugify(user.name, { lower: true, strict: true });
+                }
+            }
+        }
     }
 );
 
