@@ -14,12 +14,18 @@ export const signAccess = (user: Users, aud: string) => {
     );
 };
 
-export const signRefresh = (user: Users, aud: string) => {
-    return jwt.sign(
+export const signRefresh = async (user: Users, aud: string) => {
+    const token = jwt.sign(
         { sub: user.id, aud },
         REFRESH_SECRET,
         { expiresIn: "7d" }
     );
+
+    // Save token to database for security (Revocation support)
+    user.refresh_token = token;
+    await user.save();
+
+    return token;
 };
 
 export const loginUser = async (emailOrPhone: string, password: string, isAdmin: boolean) => {
@@ -51,7 +57,6 @@ export const loginUser = async (emailOrPhone: string, password: string, isAdmin:
 
 export const registerUser = async (data: any) => {
     const { first_name, last_name, email, password, phone } = data;
-    console.log("DEBUG: Service Register Data:", data); // Check if phone is here
 
     // Check if user exists
     const existingUser = await Users.findOne({
@@ -70,17 +75,6 @@ export const registerUser = async (data: any) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const name = `${first_name} ${last_name}`;
-
-    const payload = {
-        firstName: first_name,
-        lastName: last_name,
-        name,
-        email,
-        phone: phone
-    };
-
-    // TEMPORARY DEBUG: Throw error to see data in frontend
-    // throw new Error(`DEBUG DATA: ${JSON.stringify(payload)}`);
 
     const newUser = await Users.create({
         firstName: first_name,
@@ -102,6 +96,11 @@ export const verifyRefreshToken = async (token: string, audExpected: string) => 
         const payload = jwt.verify(token, REFRESH_SECRET) as any;
         const user = await Users.findByPk(payload.sub);
         if (!user) throw new Error("User not found");
+
+        // SECURITY: Check if token matches the one in DB (Revocation check)
+        if (user.refresh_token !== token) {
+            throw new Error("Refresh token reused or revoked");
+        }
 
         if (audExpected === "admin") {
             const role = String(user.role || "").toLowerCase();

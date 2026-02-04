@@ -19,7 +19,7 @@ export const adminLogin = async (req: Request, res: Response) => {
 
         const user = await AuthService.loginUser(email, password, true);
         const access = AuthService.signAccess(user, "admin");
-        const refresh = AuthService.signRefresh(user, "admin");
+        const refresh = await AuthService.signRefresh(user, "admin");
 
         setRefreshCookie(res, "admin_refresh_token", refresh);
         return res.json({
@@ -40,7 +40,7 @@ export const userLogin = async (req: Request, res: Response) => {
 
         const user = await AuthService.loginUser(email, password, false);
         const access = AuthService.signAccess(user, "user");
-        const refresh = AuthService.signRefresh(user, "user");
+        const refresh = await AuthService.signRefresh(user, "user");
 
         setRefreshCookie(res, "user_refresh_token", refresh);
         return res.json({
@@ -57,7 +57,7 @@ export const userLogin = async (req: Request, res: Response) => {
 export const register = async (req: Request, res: Response) => {
     try {
         const { first_name, last_name, email, password, phone } = req.body;
-        console.log("DEBUG: Controller Register Body:", req.body); // Check if phone is here
+
 
         if (!first_name || !last_name || !email || !password || !phone) {
             return res.status(400).json({ message: "Semua field harus diisi" });
@@ -116,7 +116,7 @@ export const googleCallback = async (req: Request, res: Response) => {
         if (!user) return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:3000"}/login?error=auth_failed`);
 
         const access = AuthService.signAccess(user, "user");
-        const refresh = AuthService.signRefresh(user, "user");
+        const refresh = await AuthService.signRefresh(user, "user");
 
         // Set refresh token cookie
         setRefreshCookie(res, "user_refresh_token", refresh);

@@ -36,7 +36,7 @@ export const deleteUserById = async (id: string, requestorId?: string) => {
 };
 
 export const createUser = async (data: any) => {
-    const { first_name, last_name, name, email, password, role } = data;
+    const { firstName, lastName, name, email, password, role } = data;
 
     const existingUser = await Users.findOne({ where: { email } });
     if (existingUser) throw new Error("Email sudah terdaftar");
@@ -45,8 +45,8 @@ export const createUser = async (data: any) => {
     const slug = slugify(name, { lower: true, strict: true });
 
     const newUser = await Users.create({
-        first_name,
-        last_name,
+        firstName,
+        lastName,
         slug,
         name,
         email,
@@ -77,11 +77,11 @@ export const updateUser = async (id: string, data: any) => {
     if (data.birth_date) user.birth_date = data.birth_date;
     if (data.images) user.images = data.images;
     if (data.avatarUrl) {
-        console.log("DEBUG: Updating user images to:", data.avatarUrl);
+
         user.images = data.avatarUrl;
     }
 
     await user.save();
-    console.log("DEBUG: User saved:", user.toJSON());
+
     return user;
 };

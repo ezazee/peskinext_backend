@@ -56,7 +56,7 @@ export const updateProfile = async (req: Request, res: Response) => {
         const userId = req.user?.sub;
         if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-        console.log(`DEBUG: updateProfile for ${userId}`, req.body); // Log request
+
 
         const updatedUser = await UserService.updateUser(userId, req.body);
         return res.json({ message: "Profile updated", user: updatedUser });
@@ -70,9 +70,7 @@ export const getSelf = async (req: Request, res: Response) => {
         const userId = req.user?.sub;
         if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-        console.log(`DEBUG: getSelf for userId ${userId}`);
         const user = await UserService.getUserById(userId);
-        console.log("DEBUG: getSelf DB result:", user ? user.toJSON() : "null");
 
         if (!user) return res.status(404).json({ message: "User not found" });
 

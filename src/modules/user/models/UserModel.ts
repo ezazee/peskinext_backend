@@ -17,7 +17,7 @@ interface UserAttributes {
     birth_date?: string;
     is_google?: boolean;
     refresh_token?: string; // Sesuai Auth Controller (refreshToken)
-    remember_token?: string;
+
     created_at?: Date;
     updated_at?: Date;
 }
@@ -40,7 +40,7 @@ class Users extends Model<UserAttributes, UserCreationAttributes> implements Use
     public birth_date!: string;
     public is_google!: boolean;
     public refresh_token!: string;
-    public remember_token!: string;
+
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
 }
@@ -77,7 +77,7 @@ Users.init(
             defaultValue: false
         },
         refresh_token: { type: DataTypes.TEXT },
-        remember_token: { type: DataTypes.STRING },
+
     },
     {
         sequelize: db,

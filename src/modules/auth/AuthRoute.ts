@@ -64,9 +64,9 @@ router.post("/user/login", AuthController.userLogin);
 
 /**
  * @swagger
- * /auth/register:
+ * /register:
  *   post:
- *     summary: User Register
+ *     summary: Register user baru
  *     tags: [Auth]
  *     requestBody:
  *       required: true
