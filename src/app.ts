@@ -5,6 +5,7 @@ import morgan from "morgan";
 import path from "path";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger";
+import fs from "fs";
 
 // Import Routes
 import AuthRoute from "./modules/auth/AuthRoute";
@@ -38,7 +39,20 @@ app.use(cors({
 import passport from "./config/passport";
 app.use(passport.initialize());
 
-// Swagger
+
+
+// Attempt to load static swagger.json (generated at build time)
+let finalSwaggerSpec = swaggerSpec;
+try {
+    const staticSpecPath = path.join(process.cwd(), "swagger.json");
+    if (fs.existsSync(staticSpecPath)) {
+        console.log("Loading Swagger spec from static file:", staticSpecPath);
+        finalSwaggerSpec = JSON.parse(fs.readFileSync(staticSpecPath, "utf-8"));
+    }
+} catch (err) {
+    console.warn("Could not load static swagger.json, falling back to runtime generation");
+}
+
 // Custom options to fix blank screen on Vercel/Serverless
 const swaggerOptions = {
     customCssUrl: "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css",
@@ -48,7 +62,7 @@ const swaggerOptions = {
     ],
 };
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerOptions));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(finalSwaggerSpec, swaggerOptions));
 
 // Routes
 const apiV1 = express.Router();

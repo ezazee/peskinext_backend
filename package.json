@@ -4,7 +4,8 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "ts-node src/scripts/generateSwagger.ts && tsc",
+    "generate-swagger": "ts-node src/scripts/generateSwagger.ts",
     "start": "node dist/server.js",
     "dev": "nodemon",
     "test": "echo \"Error: no test specified\" && exit 1",
