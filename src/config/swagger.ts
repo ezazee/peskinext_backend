@@ -20,6 +20,10 @@ const options = {
         },
         servers: [
             {
+                url: "/api/v1",
+                description: "Current Server (Relative)",
+            },
+            {
                 url: process.env.NEXT_PUBLIC_API_URL || `http://localhost:${PORT}/api/v1`,
                 description: "API Server",
             },
