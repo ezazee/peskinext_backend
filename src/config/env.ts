@@ -15,3 +15,7 @@ export const CORS_WHITELIST: string[] = (process.env.CORS_ORIGINS || "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+
+export const BREVO_API_KEY = process.env.BREVO_API_KEY as string;
+export const SENDER_EMAIL = process.env.SENDER_EMAIL || process.env.EMAIL_FROM || "no-reply@peskinpro.com";
+export const SENDER_NAME = process.env.SENDER_NAME || process.env.EMAIL_FROM_NAME || "PE SkinPro";

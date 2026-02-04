@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import { Op } from "sequelize";
 import Users from "../user/models/UserModel";
 import { ACCESS_SECRET, REFRESH_SECRET } from "../../config/env";
+import * as crypto from "crypto";
+import { sendForgotPasswordEmail } from "../../services/EmailService";
 
 const ADMIN_ROLES = new Set(["admin", "writter", "management"]);
 
@@ -31,6 +33,7 @@ export const signRefresh = async (user: Users, aud: string) => {
 export const loginUser = async (emailOrPhone: string, password: string, isAdmin: boolean) => {
     // Search user by email OR phone
     // We assume the input 'email' from controller might be a phone number
+    console.log("Login attempt for:", emailOrPhone);
     const user = await Users.findOne({
         where: {
             [Op.or]: [
@@ -39,9 +42,14 @@ export const loginUser = async (emailOrPhone: string, password: string, isAdmin:
             ]
         }
     });
-    if (!user) throw new Error("Email/Phone atau password salah");
+
+    if (!user) {
+        console.log("User not found for:", emailOrPhone);
+        throw new Error("Email/Phone atau password salah");
+    }
 
     const role = String(user.role || "").toLowerCase();
+    // console.log("User found:", user.email, "Role:", role);
 
     if (isAdmin) {
         if (!ADMIN_ROLES.has(role)) throw new Error("Access denied");
@@ -50,7 +58,10 @@ export const loginUser = async (emailOrPhone: string, password: string, isAdmin:
     }
 
     const ok = await bcrypt.compare(password, user.password);
-    if (!ok) throw new Error("Email atau password salah");
+    if (!ok) {
+        console.log("Password mismatch for:", user.email);
+        throw new Error("Email atau password salah");
+    }
 
     return user;
 };
@@ -113,4 +124,47 @@ export const verifyRefreshToken = async (token: string, audExpected: string) => 
     } catch (error) {
         throw new Error("Refresh token invalid/expired");
     }
+};
+
+export const forgotPassword = async (email: string) => {
+    const user = await Users.findOne({ where: { email } });
+    if (!user) throw new Error("Email tidak ditemukan");
+
+    // Check if user is registered via Google
+    if (user.is_google) {
+        throw new Error("Akun ini terdaftar dengan Google. Silakan login menggunakan Google.");
+    }
+
+    // Generate random token
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 1800000); // 30 minutes
+
+    user.reset_password_token = token;
+    user.reset_password_expires = expires;
+    await user.save();
+
+    // Send Email
+    await sendForgotPasswordEmail(user.email, user.name, token);
+
+    return true;
+};
+
+export const resetPassword = async (token: string, newPassword: string) => {
+    const user = await Users.findOne({
+        where: {
+            reset_password_token: token,
+            reset_password_expires: { [Op.gt]: new Date() } // Expires > Now
+        }
+    });
+
+    if (!user) throw new Error("Token tidak valid atau sudah kadaluarsa");
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    user.reset_password_token = null as any; // Clear token
+    user.reset_password_expires = null as any;
+    await user.save();
+
+    return true;
 };

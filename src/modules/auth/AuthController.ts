@@ -131,3 +131,29 @@ export const googleCallback = async (req: Request, res: Response) => {
         return res.redirect(`${process.env.FRONTEND_URL || "http://localhost:3000"}/login?error=server_error`);
     }
 };
+
+export const forgotPassword = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ message: "Email wajib diisi" });
+
+        await AuthService.forgotPassword(email);
+
+        return res.json({ message: "Email reset password telah dikirim" });
+    } catch (error: any) {
+        return res.status(400).json({ message: error.message });
+    }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+    try {
+        const { token, password } = req.body;
+        if (!token || !password) return res.status(400).json({ message: "Token dan password wajib diisi" });
+
+        await AuthService.resetPassword(token, password);
+
+        return res.json({ message: "Password berhasil direset. Silakan login." });
+    } catch (error: any) {
+        return res.status(400).json({ message: error.message });
+    }
+};

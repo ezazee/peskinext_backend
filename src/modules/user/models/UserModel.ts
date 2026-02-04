@@ -18,6 +18,8 @@ interface UserAttributes {
     is_google?: boolean;
     refresh_token?: string; // Sesuai Auth Controller (refreshToken)
 
+    reset_password_token?: string;
+    reset_password_expires?: Date;
     created_at?: Date;
     updated_at?: Date;
 }
@@ -41,6 +43,8 @@ class Users extends Model<UserAttributes, UserCreationAttributes> implements Use
     public is_google!: boolean;
     public refresh_token!: string;
 
+    public reset_password_token!: string;
+    public reset_password_expires!: Date;
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
 }
@@ -77,6 +81,8 @@ Users.init(
             defaultValue: false
         },
         refresh_token: { type: DataTypes.TEXT },
+        reset_password_token: { type: DataTypes.STRING },
+        reset_password_expires: { type: DataTypes.DATE },
 
     },
     {
