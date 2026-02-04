@@ -1,6 +1,12 @@
 import swaggerJsdoc from "swagger-jsdoc";
 import { PORT } from "./env";
 
+// Adjust path based on environment (development vs production)
+const isProduction = process.env.NODE_ENV === "production";
+const apiPaths = isProduction
+    ? ["./dist/modules/**/*.js", "./dist/server.js"]
+    : ["./src/modules/**/*.ts", "./src/server.ts"];
+
 const options = {
     definition: {
         openapi: "3.0.0",
@@ -14,8 +20,8 @@ const options = {
         },
         servers: [
             {
-                url: `http://localhost:${PORT}/api/v1`,
-                description: "Local Development Server",
+                url: process.env.NEXT_PUBLIC_API_URL || `http://localhost:${PORT}/api/v1`,
+                description: "API Server",
             },
         ],
         components: {
@@ -33,7 +39,7 @@ const options = {
             },
         ],
     },
-    apis: ["./src/modules/**/*.ts", "./src/server.ts"], // Path to files containing OpenAPI definitions
+    apis: apiPaths, // Path to files containing OpenAPI definitions
 };
 
 const swaggerSpec = swaggerJsdoc(options);
