@@ -1,6 +1,6 @@
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
-import path from "path";
+import * as pg from "pg";
 
 dotenv.config();
 
@@ -13,6 +13,7 @@ if (!dbUrl) {
 
 const db = new Sequelize(dbUrl, {
     dialect: "postgres",
+    dialectModule: pg,
     logging: false, // Set console.log to see SQL queries
     //   dialectOptions: {
     //       ssl: {
