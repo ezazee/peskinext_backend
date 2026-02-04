@@ -7,6 +7,9 @@ const seedUsers = async () => {
         await db.authenticate();
         console.log("Database connected...");
 
+        // Ensure table exists
+        await Users.sync({ alter: true });
+
         // Admin User
         const adminEmail = "admin@example.com";
         const adminExists = await Users.findOne({ where: { email: adminEmail } });

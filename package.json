@@ -13,7 +13,8 @@
     "seedProduct": "ts-node src/modules/product/seeders/seedProduct.ts",
     "seedCoupon": "ts-node src/database/seeders/seedCoupons.ts",
     "seedReview": "ts-node src/database/seeders/seedReviews.ts",
-    "seedBanner": "ts-node src/database/seeders/seedBanners.ts"
+    "seedBanner": "ts-node src/database/seeders/seedBanners.ts",
+    "seedAll": "ts-node src/scripts/seedAll.ts"
   },
   "keywords": [],
   "author": "",

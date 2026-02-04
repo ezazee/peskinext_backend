@@ -612,6 +612,10 @@ const seedProducts = async () => {
 
         // Add this line to force sync schema if needed (careful in prod)
         await Products.sync({ alter: true });
+        await ProductVariants.sync({ alter: true });
+        await ProductVariantPrices.sync({ alter: true });
+        await ProductImages.sync({ alter: true });
+        await ProductStocks.sync({ alter: true });
 
         // Clear existing
         try {
