@@ -21,8 +21,8 @@ const seedUsers = async () => {
                 status: "active",
                 email_verified_at: new Date(),
                 no_telp: "081234567890",
-                first_name: "Admin",
-                last_name: "User",
+                firstName: "Admin",
+                lastName: "User",
                 slug: "admin-user",
                 is_google: false
             });
@@ -45,8 +45,8 @@ const seedUsers = async () => {
                 status: "active",
                 email_verified_at: new Date(),
                 no_telp: "089876543210",
-                first_name: "Regular",
-                last_name: "User",
+                firstName: "Regular",
+                lastName: "User",
                 slug: "regular-user",
                 is_google: false
             });

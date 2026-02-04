@@ -14,8 +14,8 @@ export const createAddress = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "Maksimal 5 alamat per user" });
         }
 
-        if (is_default === "yes") {
-            await Address.update({ is_default: "no" }, { where: { user_id } });
+        if (is_default === "yes" || is_default === true) {
+            await Address.update({ is_default: false }, { where: { user_id } });
         }
 
         const newAddress = await Address.create({
@@ -27,7 +27,7 @@ export const createAddress = async (req: Request, res: Response) => {
             districts,
             villages,
             postal_code,
-            is_default: is_default || "no",
+            is_default: (is_default === "yes" || is_default === true) ? true : false,
         });
 
         res.status(201).json({ message: "Alamat berhasil ditambahkan", data: newAddress });
@@ -55,8 +55,8 @@ export const updateAddress = async (req: Request, res: Response) => {
         const addressData = await Address.findByPk(id);
         if (!addressData) return res.status(404).json({ message: "Alamat tidak ditemukan" });
 
-        if (is_default === "yes") {
-            await Address.update({ is_default: "no" }, { where: { user_id: addressData.user_id } });
+        if (is_default === "yes" || is_default === true) {
+            await Address.update({ is_default: false }, { where: { user_id: addressData.user_id } });
         }
 
         await addressData.update({
@@ -67,7 +67,7 @@ export const updateAddress = async (req: Request, res: Response) => {
             districts,
             villages,
             postal_code,
-            is_default: is_default || addressData.is_default,
+            is_default: (is_default === "yes" || is_default === true) ? true : addressData.is_default,
         });
 
         res.json({ message: "Alamat berhasil diperbarui", data: addressData });
@@ -96,9 +96,9 @@ export const setDefaultAddress = async (req: Request, res: Response) => {
         const address = await Address.findByPk(id);
         if (!address) return res.status(404).json({ message: "Alamat tidak ditemukan" });
 
-        await Address.update({ is_default: "no" }, { where: { user_id: address.user_id } });
+        await Address.update({ is_default: false }, { where: { user_id: address.user_id } });
 
-        await address.update({ is_default: "yes" });
+        await address.update({ is_default: true });
 
         res.json({ message: "Alamat default berhasil diubah", data: address });
     } catch (err: any) {
