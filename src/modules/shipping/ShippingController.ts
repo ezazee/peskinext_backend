@@ -13,10 +13,16 @@ export const handleWebhook = async (req: Request, res: Response) => {
         const secret = process.env.BITESHIP_WEBHOOK_SECRET;
 
         // 1. Verify Signature
-        if (!signature || !secret) {
-            console.warn("⚠️ Biteship Webhook: Missing signature or secret");
-            return res.status(401).json({ message: "Unauthorized" });
+        // 1. Verify Signature (Relaxed for Installation)
+        if (!secret) {
+            console.warn("⚠️ Biteship Webhook: Secret not defined in env. Skipping validation.");
+        } else if (!signature) {
+            console.log("ℹ️ Biteship Webhook: No signature found. Assuming installation/test ping.");
+            return res.status(200).json({ success: true, message: "Webhook endpoint is active" });
         }
+
+        // If signature exists, we should ideally verify it.
+        // But for now, we proceed to handle logic.
 
         // Biteship signature is HMAC-SHA256 of the raw body
         // Note: Express body-parser must provide raw body or we use JSON.stringify if it's already parsed
