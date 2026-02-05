@@ -86,7 +86,7 @@ export const getOrders = async (req: Request, res: Response) => {
     try {
         const { user_id } = req.params;
         const orders = await Orders.findAll({
-            where: { user_id },
+            where: { user_id: user_id as string },
             include: [{ model: OrderItems, as: "items" }],
         });
         const formattedOrders = orders.map((order: any) => ({
@@ -107,7 +107,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { status, note } = req.body;
 
-        const order = await Orders.findByPk(id, { transaction: t });
+        const order = await Orders.findByPk(id as string, { transaction: t });
         if (!order) {
             await t.rollback();
             return res.status(404).json({ message: "Order tidak ditemukan" });

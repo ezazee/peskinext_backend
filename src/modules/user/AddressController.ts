@@ -52,7 +52,7 @@ export const updateAddress = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { label, address, province, regencies, districts, villages, postal_code, is_default } = req.body;
 
-        const addressData = await Address.findByPk(id);
+        const addressData = await Address.findByPk(id as string);
         if (!addressData) return res.status(404).json({ message: "Alamat tidak ditemukan" });
 
         if (is_default === "yes" || is_default === true) {
@@ -79,7 +79,7 @@ export const updateAddress = async (req: Request, res: Response) => {
 export const deleteAddress = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const address = await Address.findByPk(id);
+        const address = await Address.findByPk(id as string);
         if (!address) return res.status(404).json({ message: "Alamat tidak ditemukan" });
 
         await address.destroy();
@@ -93,7 +93,7 @@ export const setDefaultAddress = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        const address = await Address.findByPk(id);
+        const address = await Address.findByPk(id as string);
         if (!address) return res.status(404).json({ message: "Alamat tidak ditemukan" });
 
         await Address.update({ is_default: false }, { where: { user_id: address.user_id } });

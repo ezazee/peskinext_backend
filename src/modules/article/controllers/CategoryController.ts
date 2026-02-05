@@ -38,7 +38,7 @@ export const updateCategory = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { name, slug, parent_id } = req.body;
 
-        const category = await Categories.findByPk(id);
+        const category = await Categories.findByPk(id as string);
         if (!category) {
             return res.status(404).json({ message: "Category not found" });
         }
@@ -61,7 +61,7 @@ export const updateCategory = async (req: Request, res: Response) => {
 export const deleteCategory = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const category = await Categories.findByPk(id);
+        const category = await Categories.findByPk(id as string);
 
         if (!category) {
             return res.status(404).json({ message: "Category not found" });

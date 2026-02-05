@@ -17,7 +17,7 @@ export const getProvinces = async (req: Request, res: Response) => {
 export const getRegencies = async (req: Request, res: Response) => {
     try {
         const { province_code } = req.params;
-        const regencies = await Regencies.findAll({ where: { province_code } });
+        const regencies = await Regencies.findAll({ where: { province_code: province_code as string } });
         res.json(regencies);
     } catch (err: any) {
         console.error("❌ getRegencies error:", err);
@@ -28,7 +28,7 @@ export const getRegencies = async (req: Request, res: Response) => {
 export const getDistricts = async (req: Request, res: Response) => {
     try {
         const { regency_code } = req.params;
-        const districts = await Districts.findAll({ where: { regency_code } });
+        const districts = await Districts.findAll({ where: { regency_code: regency_code as string } });
         res.json(districts);
     } catch (err: any) {
         console.error("❌ getDistricts error:", err);
@@ -39,7 +39,7 @@ export const getDistricts = async (req: Request, res: Response) => {
 export const getVillages = async (req: Request, res: Response) => {
     try {
         const { district_code } = req.params;
-        const villages = await Villages.findAll({ where: { district_code } });
+        const villages = await Villages.findAll({ where: { district_code: district_code as string } });
         res.json(villages);
     } catch (err: any) {
         console.error("❌ getVillages error:", err);

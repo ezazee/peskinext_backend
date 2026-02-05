@@ -13,7 +13,7 @@ export const handlePaymentCallback = async (req: Request, res: Response) => {
 export const getTransaction = async (req: Request, res: Response) => {
     try {
         const { orderId } = req.params;
-        const result = await TransactionService.getTransactionByOrder(orderId);
+        const result = await TransactionService.getTransactionByOrder(orderId as string);
         res.json(result);
     } catch (error: any) {
         res.status(500).json({ message: error.message });

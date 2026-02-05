@@ -20,9 +20,9 @@ export const deleteUser = async (req: Request, res: Response) => {
         if (!id) return res.status(400).json({ message: "User ID tidak valid" });
 
         // Assuming req.user is populated by middleware
-        const requestorId = req.user?.sub;
+        const requestorId = (req.user as any)?.sub as string;
 
-        await UserService.deleteUserById(id, requestorId);
+        await UserService.deleteUserById(id as string, requestorId);
         return res.json({ message: "User berhasil dihapus" });
     } catch (error: any) {
         const status = error.message === "User tidak ditemukan" ? 404 :
@@ -53,7 +53,7 @@ export const register = async (req: Request, res: Response) => {
 
 export const updateProfile = async (req: Request, res: Response) => {
     try {
-        const userId = req.user?.sub;
+        const userId = (req.user as any)?.sub;
         if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
 
@@ -67,7 +67,7 @@ export const updateProfile = async (req: Request, res: Response) => {
 
 export const getSelf = async (req: Request, res: Response) => {
     try {
-        const userId = req.user?.sub;
+        const userId = (req.user as any)?.sub;
         if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
         const user = await UserService.getUserById(userId);

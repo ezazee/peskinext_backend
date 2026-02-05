@@ -12,7 +12,7 @@ export const getAllProducts = async (req: Request, res: Response) => {
 
 export const getProductDetail = async (req: Request, res: Response) => {
     try {
-        const product = await ProductService.getProductDetail(req.params.productId, req.query.channel as string);
+        const product = await ProductService.getProductDetail(req.params.productId as string, req.query.channel as string);
         res.json(product);
     } catch (error: any) {
         res.status(error.message === "Produk tidak ditemukan" ? 404 : 500).json({ message: error.message });
@@ -30,7 +30,7 @@ export const createProduct = async (req: Request, res: Response) => {
 
 export const updateProduct = async (req: Request, res: Response) => {
     try {
-        await ProductService.updateProduct(req.params.id, req.body);
+        await ProductService.updateProduct(req.params.id as string, req.body);
         res.json({ message: "Produk berhasil diperbarui" });
     } catch (error: any) {
         res.status(500).json({ message: error.message });
@@ -39,7 +39,7 @@ export const updateProduct = async (req: Request, res: Response) => {
 
 export const deleteProduct = async (req: Request, res: Response) => {
     try {
-        await ProductService.deleteProduct(req.params.productId);
+        await ProductService.deleteProduct(req.params.productId as string);
         res.json({ message: "Produk berhasil dihapus" });
     } catch (error: any) {
         res.status(500).json({ message: error.message });
@@ -48,7 +48,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
 export const getProductStock = async (req: Request, res: Response) => {
     try {
-        const result = await ProductService.getProductStock(req.params.productId);
+        const result = await ProductService.getProductStock(req.params.productId as string);
         res.json(result);
     } catch (error: any) {
         res.status(500).json({ message: error.message });
@@ -66,7 +66,7 @@ export const addStock = async (req: Request, res: Response) => {
 
 export const updateStock = async (req: Request, res: Response) => {
     try {
-        await ProductService.updateStock(req.params.id, req.body);
+        await ProductService.updateStock(req.params.id as string, req.body);
         res.json({ message: "Stok berhasil diperbarui" });
     } catch (error: any) {
         res.status(500).json({ message: error.message });
@@ -75,7 +75,7 @@ export const updateStock = async (req: Request, res: Response) => {
 
 export const deleteStock = async (req: Request, res: Response) => {
     try {
-        await ProductService.deleteStock(req.params.variantId, req.params.stockId);
+        await ProductService.deleteStock(req.params.variantId as string, req.params.stockId as string);
         res.json({ message: "Stock berhasil dihapus" });
     } catch (error: any) {
         res.status(500).json({ message: error.message });
@@ -94,7 +94,7 @@ export const addVariant = async (req: Request, res: Response) => {
 export const updateVariant = async (req: Request, res: Response) => {
     try {
         const id = req.params.variantId || req.body.variant_id;
-        await ProductService.updateProductVariant(id, req.body);
+        await ProductService.updateProductVariant(id as string, req.body);
         res.json({ message: "Variant berhasil diupdate" });
     } catch (error: any) {
         res.status(500).json({ message: error.message });
@@ -103,7 +103,7 @@ export const updateVariant = async (req: Request, res: Response) => {
 
 export const deleteVariant = async (req: Request, res: Response) => {
     try {
-        await ProductService.deleteProductVariant(req.params.productId, req.params.variantId);
+        await ProductService.deleteProductVariant(req.params.productId as string, req.params.variantId as string);
         res.json({ message: "Variant berhasil dihapus" });
     } catch (error: any) {
         res.status(500).json({ message: error.message });
@@ -112,7 +112,7 @@ export const deleteVariant = async (req: Request, res: Response) => {
 
 export const getVariant = async (req: Request, res: Response) => {
     try {
-        const result = await ProductService.getVariantById(req.params.variantId);
+        const result = await ProductService.getVariantById(req.params.variantId as string);
         res.json(result);
     } catch (error: any) {
         res.status(500).json({ message: error.message });

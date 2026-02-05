@@ -20,7 +20,9 @@ export const getAllUsers = async (page: number, limit: number) => {
 };
 
 export const getUserById = async (id: string) => {
-    return await Users.findByPk(id);
+    return await Users.findByPk(id, {
+        include: [{ association: "addresses" }]
+    });
 };
 
 export const deleteUserById = async (id: string, requestorId?: string) => {

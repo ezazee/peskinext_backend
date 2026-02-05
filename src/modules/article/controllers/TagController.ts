@@ -13,7 +13,7 @@ export const getTags = async (req: Request, res: Response) => {
 
 export const getTagById = async (req: Request, res: Response) => {
     try {
-        const tag = await Tags.findByPk(req.params.id);
+        const tag = await Tags.findByPk(req.params.id as string);
         if (!tag) return res.status(404).json({ message: "Tag not found" });
         res.json(tag);
     } catch (error: any) {
@@ -27,7 +27,7 @@ export const updateTag = async (req: Request, res: Response) => {
         const { name, slug } = req.body;
         const generatedSlug = slug || slugify(name, { lower: true, strict: true });
 
-        const tag = await Tags.findByPk(id);
+        const tag = await Tags.findByPk(id as string);
         if (!tag) return res.status(404).json({ message: "Tag not found" });
 
         await tag.update({
@@ -44,7 +44,7 @@ export const updateTag = async (req: Request, res: Response) => {
 export const deleteTag = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const tag = await Tags.findByPk(id);
+        const tag = await Tags.findByPk(id as string);
 
         if (!tag) return res.status(404).json({ message: "Tag not found" });
 

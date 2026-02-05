@@ -73,7 +73,7 @@ export const updateCartItem = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { quantity } = req.body;
 
-        const cartItem = await Cart.findByPk(id);
+        const cartItem = await Cart.findByPk(id as string);
         if (!cartItem) return res.status(404).json({ message: "Cart item not found" });
 
         cartItem.quantity = quantity;
@@ -90,7 +90,7 @@ export const removeCartItem = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        const cartItem = await Cart.findByPk(id);
+        const cartItem = await Cart.findByPk(id as string);
         if (!cartItem) return res.status(404).json({ message: "Cart item not found" });
 
         await cartItem.destroy();

@@ -46,7 +46,6 @@ let finalSwaggerSpec = swaggerSpec;
 try {
     const staticSpecPath = path.join(process.cwd(), "swagger.json");
     if (fs.existsSync(staticSpecPath)) {
-        console.log("Loading Swagger spec from static file:", staticSpecPath);
         finalSwaggerSpec = JSON.parse(fs.readFileSync(staticSpecPath, "utf-8"));
     }
 } catch (err) {

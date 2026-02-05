@@ -73,7 +73,7 @@ export const getAllPosts = async (req: Request, res: Response) => {
 
 export const getPostById = async (req: Request, res: Response) => {
     try {
-        const post = await Posts.findByPk(req.params.id, {
+        const post = await Posts.findByPk(req.params.id as string, {
             include: [
                 { model: Categories, attributes: ["id", "name", "slug"] },
                 { model: Tags, through: { attributes: [] }, attributes: ["id", "name"] },
@@ -91,7 +91,7 @@ export const updatePost = async (req: Request, res: Response) => {
     try {
         const { title, content, category_id, tags } = req.body;
 
-        const post = await Posts.findByPk(req.params.id);
+        const post = await Posts.findByPk(req.params.id as string);
         if (!post) return res.status(404).json({ message: "Post not found" });
 
         await post.update({ title, content, category_id });
@@ -119,7 +119,7 @@ export const updatePost = async (req: Request, res: Response) => {
 
 export const deletePost = async (req: Request, res: Response) => {
     try {
-        const post = await Posts.findByPk(req.params.id);
+        const post = await Posts.findByPk(req.params.id as string);
         if (!post) return res.status(404).json({ message: "Post not found" });
 
         await post.destroy();
