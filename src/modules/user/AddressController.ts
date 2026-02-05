@@ -4,7 +4,7 @@ import Users from "../user/models/UserModel";
 
 export const createAddress = async (req: Request, res: Response) => {
     try {
-        const { user_id, label, address, province, regencies, districts, villages, postal_code, is_default } = req.body;
+        const { user_id, label, recipient, phone, address, province, regencies, districts, villages, postal_code, is_default } = req.body;
 
         const user = await Users.findByPk(user_id);
         if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
@@ -21,6 +21,8 @@ export const createAddress = async (req: Request, res: Response) => {
         const newAddress = await Address.create({
             user_id,
             label,
+            recipient,
+            phone,
             address,
             province,
             regencies,
@@ -50,7 +52,7 @@ export const getAddresses = async (req: Request, res: Response) => {
 export const updateAddress = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { label, address, province, regencies, districts, villages, postal_code, is_default } = req.body;
+        const { label, recipient, phone, address, province, regencies, districts, villages, postal_code, is_default } = req.body;
 
         const addressData = await Address.findByPk(id as string);
         if (!addressData) return res.status(404).json({ message: "Alamat tidak ditemukan" });
@@ -61,6 +63,8 @@ export const updateAddress = async (req: Request, res: Response) => {
 
         await addressData.update({
             label,
+            recipient,
+            phone,
             address,
             province,
             regencies,

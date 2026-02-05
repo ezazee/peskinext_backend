@@ -35,7 +35,7 @@ const router = express.Router();
  *       201:
  *         description: Address created
  */
-router.post("/addres", AddressController.createAddress);
+router.post("/address", AddressController.createAddress);
 
 /**
  * @swagger
@@ -53,7 +53,7 @@ router.post("/addres", AddressController.createAddress);
  *       200:
  *         description: List of addresses
  */
-router.get("/addres/:user_id", AddressController.getAddresses);
+router.get("/addresses/:user_id", AddressController.getAddresses);
 
 /**
  * @swagger
@@ -81,7 +81,7 @@ router.get("/addres/:user_id", AddressController.getAddresses);
  *       200:
  *         description: Address updated
  */
-router.patch("/addres/:id", AddressController.updateAddress);
+router.put("/address/:id", AddressController.updateAddress);
 
 /**
  * @swagger
@@ -99,7 +99,7 @@ router.patch("/addres/:id", AddressController.updateAddress);
  *       200:
  *         description: Address deleted
  */
-router.delete("/addres/:id", AddressController.deleteAddress);
+router.delete("/address/:id", AddressController.deleteAddress);
 
 /**
  * @swagger
@@ -125,6 +125,6 @@ router.delete("/addres/:id", AddressController.deleteAddress);
  *       200:
  *         description: Address set as default
  */
-router.patch("/addres/:id/set-default", AddressController.setDefaultAddress);
+router.put("/address/:id/default", AddressController.setDefaultAddress);
 
 export default router;

@@ -25,7 +25,16 @@ passport.use(
                     if (name || avatar) {
                         const emailName = profile.emails?.[0]?.value.split("@")[0];
                         user.name = name || user.name || emailName || "User"; // Ensure string
-                        if (avatar) user.images = avatar;
+
+                        // Only update avatar from Google if user has no avatar or is using default
+                        // We check if it's NOT a custom uploaded one (which usually has "uploads/" in path)
+                        // Or simply if it is empty. 
+                        // But since we want to allow custom uploads to persist, we shouldn't blindly overwrite.
+                        // Let's only overwrite if current is null/empty.
+                        if (avatar && (!user.images || user.images === "")) {
+                            user.images = avatar;
+                        }
+
                         await user.save();
                     }
                     return done(null, user);

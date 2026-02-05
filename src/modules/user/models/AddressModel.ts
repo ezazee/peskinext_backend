@@ -6,6 +6,8 @@ interface AddressAttributes {
     id: string;
     user_id: string;
     label: string;
+    recipient?: string;
+    phone?: string;
     address: string;
     province?: string;
     regencies?: string;
@@ -23,6 +25,8 @@ class Address extends Model<AddressAttributes, AddressCreationAttributes> implem
     public id!: string;
     public user_id!: string;
     public label!: string;
+    public recipient!: string;
+    public phone!: string;
     public address!: string;
     public province!: string;
     public regencies!: string;
@@ -39,6 +43,8 @@ Address.init(
         id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
         user_id: { type: DataTypes.UUID, allowNull: false },
         label: { type: DataTypes.STRING, allowNull: false },
+        recipient: { type: DataTypes.STRING },
+        phone: { type: DataTypes.STRING },
         address: { type: DataTypes.TEXT, allowNull: false },
         province: { type: DataTypes.STRING },
         regencies: { type: DataTypes.STRING },

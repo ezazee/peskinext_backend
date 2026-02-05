@@ -100,4 +100,13 @@ app.get("/", (req: Request, res: Response) => {
     });
 });
 
+// Global Error Handler
+app.use((err: any, req: Request, res: Response, next: any) => {
+    console.error("Global Error:", err);
+    res.status(err.status || 500).json({
+        success: false,
+        error: err.message || "Internal Server Error",
+    });
+});
+
 export default app;
