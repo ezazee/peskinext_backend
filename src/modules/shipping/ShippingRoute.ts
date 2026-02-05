@@ -31,4 +31,33 @@ const router = express.Router();
  */
 router.post("/shipping/check-ongkir", ShippingController.checkOngkir);
 
+/**
+ * @swagger
+ * /shipping/webhook:
+ *   post:
+ *     summary: Handle Biteship Webhooks
+ *     tags: [Shipping]
+ *     description: Endpoint to receive order status updates from Biteship.
+ *     parameters:
+ *       - in: header
+ *         name: x-biteship-signature
+ *         schema:
+ *           type: string
+ *         description: Signature for verification
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               event:
+ *                 type: string
+ *               payload:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Webhook received successfully
+ */
+router.post("/shipping/webhook", ShippingController.handleWebhook);
+
 export default router;

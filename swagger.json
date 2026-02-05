@@ -1,0 +1,2353 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "PESkinPro Backend API",
+    "version": "1.0.0",
+    "description": "API Documentation for PESkinPro E-Commerce Backend",
+    "contact": {
+      "name": "Developer"
+    }
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Current Server (Relative)"
+    },
+    {
+      "url": "http://localhost:5000/api/v1",
+      "description": "API Server (Configured)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/categories": {
+      "post": {
+        "summary": "Create Article Category",
+        "tags": [
+          "Article"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Category created"
+          }
+        }
+      },
+      "get": {
+        "summary": "Get All Article Categories",
+        "tags": [
+          "Article"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of categories"
+          }
+        }
+      }
+    },
+    "/categories/{id}": {
+      "patch": {
+        "summary": "Update Article Category",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Category updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Article Category",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category deleted"
+          }
+        }
+      }
+    },
+    "/posts": {
+      "get": {
+        "summary": "Get All Posts",
+        "tags": [
+          "Article"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of posts"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create New Post",
+        "tags": [
+          "Article"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "content"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "category_id": {
+                    "type": "integer"
+                  },
+                  "author_id": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Post created"
+          }
+        }
+      }
+    },
+    "/posts/{id}": {
+      "get": {
+        "summary": "Get Post by ID",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Post details"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Post",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Post updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Post",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Post deleted"
+          }
+        }
+      }
+    },
+    "/tags": {
+      "get": {
+        "summary": "Get All Tags",
+        "tags": [
+          "Article"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tags"
+          }
+        }
+      }
+    },
+    "/tags/{id}": {
+      "get": {
+        "summary": "Get Tag by ID",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag details"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Tag",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tag updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Tag",
+        "tags": [
+          "Article"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag deleted"
+          }
+        }
+      }
+    },
+    "/auth/admin/login": {
+      "post": {
+        "summary": "Admin Login",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        }
+      }
+    },
+    "/auth/user/login": {
+      "post": {
+        "summary": "User Login",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful"
+          }
+        }
+      }
+    },
+    "/register": {
+      "post": {
+        "summary": "Register New User",
+        "tags": [
+          "User"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password",
+                  "confPassword",
+                  "phone"
+                ],
+                "properties": {
+                  "first_name": {
+                    "type": "string"
+                  },
+                  "last_name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "confPassword": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registration successful"
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/token/refresh": {
+      "post": {
+        "summary": "Refresh Access Token",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "New access token generated"
+          },
+          "403": {
+            "description": "Invalid or expired refresh token"
+          }
+        }
+      }
+    },
+    "/admin/logout": {
+      "post": {
+        "summary": "Admin Logout",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout successful"
+          }
+        }
+      }
+    },
+    "/user/logout": {
+      "post": {
+        "summary": "User Logout",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout successful"
+          }
+        }
+      }
+    },
+    "/admin/me": {
+      "get": {
+        "summary": "Get Current Admin Profile",
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Admin profile data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/google": {
+      "get": {
+        "summary": "Initiate Google OAuth Login",
+        "tags": [
+          "Auth"
+        ],
+        "description": "Redirects user to Google Login page.",
+        "responses": {
+          "302": {
+            "description": "Redirects to Google"
+          }
+        }
+      }
+    },
+    "/auth/google/callback": {
+      "get": {
+        "summary": "Google OAuth Callback",
+        "tags": [
+          "Auth"
+        ],
+        "description": "Handles the return from Google, generates tokens, and redirects to frontend.",
+        "responses": {
+          "302": {
+            "description": "Redirects to Frontend with token"
+          },
+          "401": {
+            "description": "Authentication failed"
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "summary": "Request Forgot Password Email",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email sent"
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "summary": "Reset Password with Token",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token",
+                  "password"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successful"
+          }
+        }
+      }
+    },
+    "/banners": {
+      "get": {
+        "summary": "Get All Banners",
+        "tags": [
+          "Banner"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of banners grouped by section (carousel/tiles)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "main": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "src": {
+                            "type": "string"
+                          },
+                          "mobileSrc": {
+                            "type": "string"
+                          },
+                          "alt": {
+                            "type": "string"
+                          },
+                          "redirect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "carousel": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "src": {
+                            "type": "string"
+                          },
+                          "alt": {
+                            "type": "string"
+                          },
+                          "redirect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "tiles": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "src": {
+                            "type": "string"
+                          },
+                          "alt": {
+                            "type": "string"
+                          },
+                          "redirect": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create New Banner",
+        "tags": [
+          "Banner"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "section",
+                  "image_url",
+                  "alt_text"
+                ],
+                "properties": {
+                  "section": {
+                    "type": "string",
+                    "enum": [
+                      "main",
+                      "carousel",
+                      "tiles"
+                    ]
+                  },
+                  "image_url": {
+                    "type": "string"
+                  },
+                  "alt_text": {
+                    "type": "string"
+                  },
+                  "sort_order": {
+                    "type": "integer"
+                  },
+                  "redirect_url": {
+                    "type": "string"
+                  },
+                  "is_active": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Banner created"
+          }
+        }
+      }
+    },
+    "/cart": {
+      "post": {
+        "summary": "Add Item to Cart",
+        "tags": [
+          "Cart"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id",
+                  "product_id",
+                  "variant_id"
+                ],
+                "properties": {
+                  "user_id": {
+                    "type": "integer"
+                  },
+                  "product_id": {
+                    "type": "integer"
+                  },
+                  "variant_id": {
+                    "type": "integer"
+                  },
+                  "quantity": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Item added to cart"
+          }
+        }
+      }
+    },
+    "/cart/{user_id}": {
+      "get": {
+        "summary": "Get Cart by User ID",
+        "tags": [
+          "Cart"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart details"
+          }
+        }
+      }
+    },
+    "/cart/{id}": {
+      "patch": {
+        "summary": "Update Cart Item Quantity",
+        "tags": [
+          "Cart"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cart item updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove Cart Item",
+        "tags": [
+          "Cart"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart item removed"
+          }
+        }
+      }
+    },
+    "/vouchers": {
+      "get": {
+        "summary": "Get All Active Coupons",
+        "tags": [
+          "Coupon"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of active coupons",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Coupon Code"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "subtitle": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "shipping",
+                          "promo"
+                        ]
+                      },
+                      "savingLabel": {
+                        "type": "string"
+                      },
+                      "validTo": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vouchers/check": {
+      "post": {
+        "summary": "Check Coupon Validity",
+        "tags": [
+          "Coupon"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code",
+                  "total",
+                  "items"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "total": {
+                    "type": "number"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Coupon is valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "valid": {
+                      "type": "boolean"
+                    },
+                    "discount": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid coupon"
+          }
+        }
+      }
+    },
+    "/invoices/{orderId}": {
+      "get": {
+        "summary": "Get Invoice by Order ID",
+        "tags": [
+          "Invoice"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Order UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invoice_number": {
+                      "type": "string"
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "status": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders": {
+      "post": {
+        "summary": "Create New Order",
+        "tags": [
+          "Order"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id",
+                  "courier",
+                  "shipping_cost"
+                ],
+                "properties": {
+                  "user_id": {
+                    "type": "string"
+                  },
+                  "courier": {
+                    "type": "string"
+                  },
+                  "shipping_cost": {
+                    "type": "number"
+                  },
+                  "coupon_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created"
+          }
+        }
+      }
+    },
+    "/orders/{user_id}": {
+      "get": {
+        "summary": "Get Orders by User ID",
+        "tags": [
+          "Order"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of orders"
+          }
+        }
+      }
+    },
+    "/orders/{id}/status": {
+      "patch": {
+        "summary": "Update Order Status",
+        "tags": [
+          "Order"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order status updated"
+          }
+        }
+      }
+    },
+    "/products": {
+      "post": {
+        "summary": "Create New Product",
+        "tags": [
+          "Product"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "category",
+                  "price",
+                  "weight"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "price": {
+                    "type": "number"
+                  },
+                  "weight": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created"
+          }
+        }
+      },
+      "get": {
+        "summary": "Get All Products",
+        "tags": [
+          "Product"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of products"
+          }
+        }
+      }
+    },
+    "/products/{productId}": {
+      "get": {
+        "summary": "Get Product Detail",
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product detail"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Product",
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product deleted"
+          }
+        }
+      }
+    },
+    "/products/{id}": {
+      "patch": {
+        "summary": "Update Product",
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "price": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated"
+          }
+        }
+      }
+    },
+    "/stock": {
+      "post": {
+        "summary": "Add Stock",
+        "tags": [
+          "Product"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "variant_id": {
+                    "type": "integer"
+                  },
+                  "quantity": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Stock added"
+          }
+        }
+      }
+    },
+    "/stock/{productId}": {
+      "get": {
+        "summary": "Get Product Stock",
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock details"
+          }
+        }
+      }
+    },
+    "/stock/{id}": {
+      "patch": {
+        "summary": "Update Stock",
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stock updated"
+          }
+        }
+      }
+    },
+    "/stock/{variantId}/{stockId}": {
+      "delete": {
+        "summary": "Delete Stock",
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "variantId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "stockId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock deleted"
+          }
+        }
+      }
+    },
+    "/variant/{variantId}": {
+      "get": {
+        "summary": "Get Variant Detail",
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "variantId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Variant detail"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Variant",
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "variantId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "variant_name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Variant updated"
+          }
+        }
+      }
+    },
+    "/variant": {
+      "post": {
+        "summary": "Add Variant",
+        "tags": [
+          "Product"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "product_id": {
+                    "type": "string"
+                  },
+                  "variant_name": {
+                    "type": "string"
+                  },
+                  "weight": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Variant added"
+          }
+        }
+      }
+    },
+    "/variant/{productId}/{variantId}": {
+      "delete": {
+        "summary": "Delete Variant",
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "variantId",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Variant deleted"
+          }
+        }
+      }
+    },
+    "/reviews": {
+      "get": {
+        "summary": "Get Reviews by Product",
+        "tags": [
+          "Review"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "slug",
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "description": "Product Slug"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of reviews",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "user": {
+                        "type": "string"
+                      },
+                      "variant": {
+                        "type": "string"
+                      },
+                      "rating": {
+                        "type": "number"
+                      },
+                      "comment": {
+                        "type": "string"
+                      },
+                      "images": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "date": {
+                        "type": "string",
+                        "format": "date"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create New Review",
+        "tags": [
+          "Review"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "productSlug",
+                  "rating",
+                  "comment"
+                ],
+                "properties": {
+                  "productSlug": {
+                    "type": "string"
+                  },
+                  "variantName": {
+                    "type": "string"
+                  },
+                  "rating": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "comment": {
+                    "type": "string"
+                  },
+                  "images": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Review created"
+          }
+        }
+      }
+    },
+    "/shipping/check-ongkir": {
+      "post": {
+        "summary": "Check Shipping Cost (RajaOngkir)",
+        "tags": [
+          "Shipping"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "user_id"
+                ],
+                "properties": {
+                  "user_id": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Shipping cost details"
+          }
+        }
+      }
+    },
+    "/shipping/webhook": {
+      "post": {
+        "summary": "Handle Biteship Webhooks",
+        "tags": [
+          "Shipping"
+        ],
+        "description": "Endpoint to receive order status updates from Biteship.",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-biteship-signature",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Signature for verification"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "event": {
+                    "type": "string"
+                  },
+                  "payload": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook received successfully"
+          }
+        }
+      }
+    },
+    "/transactions/callback": {
+      "post": {
+        "summary": "Handle Payment Callback (DOKU)",
+        "tags": [
+          "Transaction"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "order": {
+                    "type": "object",
+                    "properties": {
+                      "invoice_number": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "transaction": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Callback processed"
+          }
+        }
+      }
+    },
+    "/transactions/{orderId}": {
+      "get": {
+        "summary": "Get Transaction by Order ID",
+        "tags": [
+          "Transaction"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Order UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction details"
+          }
+        }
+      }
+    },
+    "/single": {
+      "post": {
+        "summary": "Upload Single File",
+        "tags": [
+          "Upload"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "article",
+                      "product"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File uploaded"
+          }
+        }
+      }
+    },
+    "/multiple": {
+      "post": {
+        "summary": "Upload Multiple Files",
+        "tags": [
+          "Upload"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "article",
+                      "product"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Files uploaded"
+          }
+        }
+      }
+    },
+    "/addres": {
+      "post": {
+        "summary": "Create New Address",
+        "tags": [
+          "Address"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "integer"
+                  },
+                  "recipient_name": {
+                    "type": "string"
+                  },
+                  "phone_number": {
+                    "type": "string"
+                  },
+                  "address_line": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Address created"
+          }
+        }
+      }
+    },
+    "/addres/{user_id}": {
+      "get": {
+        "summary": "Get Addresses by User ID",
+        "tags": [
+          "Address"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of addresses"
+          }
+        }
+      }
+    },
+    "/addres/{id}": {
+      "patch": {
+        "summary": "Update Address",
+        "tags": [
+          "Address"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "recipient_name": {
+                    "type": "string"
+                  },
+                  "address_line": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Address updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Address",
+        "tags": [
+          "Address"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Address deleted"
+          }
+        }
+      }
+    },
+    "/addres/{id}/set-default": {
+      "patch": {
+        "summary": "Set Address as Default",
+        "tags": [
+          "Address"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Address set as default"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Get All Users",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of users"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        }
+      }
+    },
+    "/user/me": {
+      "put": {
+        "summary": "Update Current User Profile",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "birthDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "avatarUrl": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "get": {
+        "summary": "Get Current User Profile",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/user/create": {
+      "post": {
+        "summary": "Create User (Admin)",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "email",
+                  "password",
+                  "confPassword",
+                  "role"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "confPassword": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "delete": {
+        "summary": "Delete User",
+        "tags": [
+          "User"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted"
+          },
+          "403": {
+            "description": "Admin access required"
+          }
+        }
+      }
+    },
+    "/provinces": {
+      "get": {
+        "summary": "Get All Provinces",
+        "tags": [
+          "Wilayah"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of provinces"
+          }
+        }
+      }
+    },
+    "/regencies/{province_code}": {
+      "get": {
+        "summary": "Get Regencies by Province Code",
+        "tags": [
+          "Wilayah"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "province_code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of regencies"
+          }
+        }
+      }
+    },
+    "/districts/{regency_code}": {
+      "get": {
+        "summary": "Get Districts by Regency Code",
+        "tags": [
+          "Wilayah"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "regency_code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of districts"
+          }
+        }
+      }
+    },
+    "/villages/{district_code}": {
+      "get": {
+        "summary": "Get Villages by District Code",
+        "tags": [
+          "Wilayah"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "district_code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of villages"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Article",
+      "description": "Article management (Posts, Categories, Tags)"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication management"
+    },
+    {
+      "name": "Banner",
+      "description": "Banner management for Carousel and Tiles"
+    },
+    {
+      "name": "Cart",
+      "description": "Cart management"
+    },
+    {
+      "name": "Coupon",
+      "description": "Voucher and Coupon management"
+    },
+    {
+      "name": "Invoice",
+      "description": "Invoice management"
+    },
+    {
+      "name": "Order",
+      "description": "Order management"
+    },
+    {
+      "name": "Product",
+      "description": "Product management"
+    },
+    {
+      "name": "Review",
+      "description": "Product reviews management"
+    },
+    {
+      "name": "Shipping",
+      "description": "Shipping cost check"
+    },
+    {
+      "name": "Transaction",
+      "description": "Payment and transaction management"
+    },
+    {
+      "name": "Upload",
+      "description": "File upload management"
+    },
+    {
+      "name": "Address",
+      "description": "Address management"
+    },
+    {
+      "name": "User",
+      "description": "User management"
+    },
+    {
+      "name": "Wilayah",
+      "description": "Indonesian region data"
+    }
+  ]
+}
