@@ -53,6 +53,7 @@ const formatProductToFrontend = (product: any, channelQuery?: string) => {
             price,
             oldPrice,
             stock,
+            weight: v.weight ? Number(v.weight) : 0,
             // Keep original for internal use if needed, but frontend only needs above
             raw_prices: prices,
             raw_stocks: stocks
@@ -101,8 +102,20 @@ const formatProductToFrontend = (product: any, channelQuery?: string) => {
     };
 };
 
-export const getAllProducts = async () => {
+export const getAllProducts = async (searchQuery?: string) => {
+    const whereCondition: any = {};
+
+    if (searchQuery) {
+        const lowerQuery = `%${searchQuery.toLowerCase()}%`;
+        whereCondition[Op.or] = [
+            { name: { [Op.iLike]: lowerQuery } },
+            { description: { [Op.iLike]: lowerQuery } },
+            { category: { [Op.iLike]: lowerQuery } },
+        ];
+    }
+
     const products = await Products.findAll({
+        where: whereCondition,
         include: [
             {
                 model: ProductImages,

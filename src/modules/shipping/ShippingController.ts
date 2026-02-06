@@ -92,15 +92,18 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
 
 
-// Helper: Resolve Area ID from Biteship
 const resolveAreaId = async (query: string): Promise<string | null> => {
     try {
+        if (!query) return null;
+        console.log(`🔍 resolveAreaId looking for: '${query}'`);
         const apiKey = process.env.BITESHIP_API_KEY;
         const url = `https://api.biteship.com/v1/maps/areas?countries=ID&input=${encodeURIComponent(query)}&type=single`;
         const res = await fetch(url, {
             headers: { "Authorization": `Bearer ${apiKey}` }
         });
         const data = await res.json() as any;
+        console.log(`🔍 resolveAreaId response for '${query}':`, JSON.stringify(data));
+
         if (data.success && data.areas && data.areas.length > 0) {
             return data.areas[0].id;
         }
@@ -127,6 +130,9 @@ export const checkOngkir = async (req: Request, res: Response) => {
         // Use true as boolean
         const address = await Address.findOne({ where: { user_id, is_default: true } });
         console.log("🔍 Address Found:", address ? "YES" : "NO", address?.id);
+        if (address) {
+            console.log(`🔍 Address Details: Postal=${address.postal_code}, District=${address.districts}, ID=${address.id}`);
+        }
 
         if (!address) return res.status(400).json({ message: "Alamat default tidak ditemukan" });
 

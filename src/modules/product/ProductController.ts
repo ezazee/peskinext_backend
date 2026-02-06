@@ -3,7 +3,8 @@ import * as ProductService from "./ProductService";
 
 export const getAllProducts = async (req: Request, res: Response) => {
     try {
-        const products = await ProductService.getAllProducts();
+        const search = req.query.search as string;
+        const products = await ProductService.getAllProducts(search);
         res.json(products);
     } catch (error: any) {
         res.status(500).json({ message: error.message });

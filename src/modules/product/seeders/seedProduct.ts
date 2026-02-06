@@ -28,10 +28,10 @@ const productsData = [
         weightGr: 50,
         soldCount: 1200,
         variants: [
-            { name: "50ml", price: 144000, oldPrice: 160000, stock: 120 },
-            { name: "100ml", price: 270000, oldPrice: 300000, stock: 90 },
-            { name: "150ml", price: 390000, oldPrice: 430000, stock: 60 },
-            { name: "200ml", price: 500000, oldPrice: 550000, stock: 40 },
+            { name: "50ml", price: 144000, oldPrice: 160000, stock: 120, weight: 100 },
+            { name: "100ml", price: 270000, oldPrice: 300000, stock: 90, weight: 200 },
+            { name: "150ml", price: 390000, oldPrice: 430000, stock: 60, weight: 280 },
+            { name: "200ml", price: 500000, oldPrice: 550000, stock: 40, weight: 350 },
         ],
     },
     {
@@ -55,10 +55,10 @@ const productsData = [
         weightGr: 20,
         soldCount: 850,
         variants: [
-            { name: "20g", price: 144000, oldPrice: 160000, stock: 100 },
-            { name: "40g", price: 270000, oldPrice: 300000, stock: 80 },
-            { name: "60g", price: 390000, oldPrice: 430000, stock: 50 },
-            { name: "80g", price: 500000, oldPrice: 550000, stock: 30 },
+            { name: "20g", price: 144000, oldPrice: 160000, stock: 100, weight: 50 },
+            { name: "40g", price: 270000, oldPrice: 300000, stock: 80, weight: 80 },
+            { name: "60g", price: 390000, oldPrice: 430000, stock: 50, weight: 110 },
+            { name: "80g", price: 500000, oldPrice: 550000, stock: 30, weight: 140 },
         ],
     },
     {
@@ -82,10 +82,10 @@ const productsData = [
         weightGr: 50,
         soldCount: 2000,
         variants: [
-            { name: "50ml", price: 144000, oldPrice: 160000, stock: 150 },
-            { name: "100ml", price: 270000, oldPrice: 300000, stock: 100 },
-            { name: "150ml", price: 390000, oldPrice: 430000, stock: 70 },
-            { name: "200ml", price: 500000, oldPrice: 550000, stock: 40 },
+            { name: "50ml", price: 144000, oldPrice: 160000, stock: 150, weight: 80 },
+            { name: "100ml", price: 270000, oldPrice: 300000, stock: 100, weight: 150 },
+            { name: "150ml", price: 390000, oldPrice: 430000, stock: 70, weight: 220 },
+            { name: "200ml", price: 500000, oldPrice: 550000, stock: 40, weight: 290 },
         ],
     },
     {
@@ -109,10 +109,10 @@ const productsData = [
         weightGr: 150,
         soldCount: 500,
         variants: [
-            { name: "30 pads", price: 144000, oldPrice: 160000, stock: 110 },
-            { name: "60 pads", price: 270000, oldPrice: 300000, stock: 90 },
-            { name: "90 pads", price: 390000, oldPrice: 430000, stock: 60 },
-            { name: "120 pads", price: 500000, oldPrice: 550000, stock: 40 },
+            { name: "30 pads", price: 144000, oldPrice: 160000, stock: 110, weight: 120 },
+            { name: "60 pads", price: 270000, oldPrice: 300000, stock: 90, weight: 200 },
+            { name: "90 pads", price: 390000, oldPrice: 430000, stock: 60, weight: 280 },
+            { name: "120 pads", price: 500000, oldPrice: 550000, stock: 40, weight: 350 },
         ],
     },
     {
@@ -136,10 +136,10 @@ const productsData = [
         weightGr: 30,
         soldCount: 900,
         variants: [
-            { name: "30g", price: 144000, oldPrice: 160000, stock: 120 },
-            { name: "60g", price: 270000, oldPrice: 300000, stock: 90 },
-            { name: "90g", price: 390000, oldPrice: 430000, stock: 60 },
-            { name: "120g", price: 500000, oldPrice: 550000, stock: 40 },
+            { name: "30g", price: 144000, oldPrice: 160000, stock: 120, weight: 70 },
+            { name: "60g", price: 270000, oldPrice: 300000, stock: 90, weight: 110 },
+            { name: "90g", price: 390000, oldPrice: 430000, stock: 60, weight: 150 },
+            { name: "120g", price: 500000, oldPrice: 550000, stock: 40, weight: 190 },
         ],
     },
     {
@@ -163,10 +163,10 @@ const productsData = [
         weightGr: 15,
         soldCount: 1500,
         variants: [
-            { name: "15ml", price: 144000, oldPrice: 160000, stock: 150 },
-            { name: "30ml", price: 270000, oldPrice: 300000, stock: 100 },
-            { name: "50ml", price: 390000, oldPrice: 430000, stock: 70 },
-            { name: "75ml", price: 500000, oldPrice: 550000, stock: 40 },
+            { name: "15ml", price: 144000, oldPrice: 160000, stock: 150, weight: 50 },
+            { name: "30ml", price: 270000, oldPrice: 300000, stock: 100, weight: 80 },
+            { name: "50ml", price: 390000, oldPrice: 430000, stock: 70, weight: 120 },
+            { name: "75ml", price: 500000, oldPrice: 550000, stock: 40, weight: 160 },
         ],
     },
     {
@@ -190,10 +190,10 @@ const productsData = [
         weightGr: 50,
         soldCount: 300,
         variants: [
-            { name: "50ml", price: 144000, oldPrice: 160000, stock: 130 },
-            { name: "100ml", price: 270000, oldPrice: 300000, stock: 90 },
-            { name: "150ml", price: 390000, oldPrice: 430000, stock: 60 },
-            { name: "200ml", price: 500000, oldPrice: 550000, stock: 40 },
+            { name: "50ml", price: 144000, oldPrice: 160000, stock: 130, weight: 100 },
+            { name: "100ml", price: 270000, oldPrice: 300000, stock: 90, weight: 180 },
+            { name: "150ml", price: 390000, oldPrice: 430000, stock: 60, weight: 250 },
+            { name: "200ml", price: 500000, oldPrice: 550000, stock: 40, weight: 320 },
         ],
     },
     // --- 5 Produk Bundle ---
@@ -218,10 +218,10 @@ const productsData = [
         weightGr: 100,
         soldCount: 450,
         variants: [
-            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 100 },
-            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 80 },
-            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50 },
-            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30 },
+            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 100, weight: 300 },
+            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 80, weight: 450 },
+            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50, weight: 600 },
+            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30, weight: 800 },
         ],
     },
     {
@@ -245,10 +245,10 @@ const productsData = [
         weightGr: 35,
         soldCount: 200,
         variants: [
-            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 90 },
-            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 70 },
-            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50 },
-            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30 },
+            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 90, weight: 150 },
+            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 70, weight: 250 },
+            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50, weight: 350 },
+            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30, weight: 500 },
         ],
     },
     {
@@ -272,10 +272,10 @@ const productsData = [
         weightGr: 80,
         soldCount: 300,
         variants: [
-            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 90 },
-            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 70 },
-            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50 },
-            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30 },
+            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 90, weight: 220 },
+            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 70, weight: 350 },
+            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50, weight: 480 },
+            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30, weight: 650 },
         ],
     },
     {
@@ -299,10 +299,10 @@ const productsData = [
         weightGr: 200,
         soldCount: 150,
         variants: [
-            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 80 },
-            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 60 },
-            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 40 },
-            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 20 },
+            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 80, weight: 280 },
+            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 60, weight: 400 },
+            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 40, weight: 550 },
+            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 20, weight: 750 },
         ],
     },
     {
@@ -326,10 +326,10 @@ const productsData = [
         weightGr: 80,
         soldCount: 100,
         variants: [
-            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 70 },
-            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 50 },
-            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 30 },
-            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 20 },
+            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 70, weight: 250 },
+            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 50, weight: 380 },
+            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 30, weight: 520 },
+            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 20, weight: 700 },
         ],
     },
     // --- Bundle Tambahan ---
@@ -354,10 +354,10 @@ const productsData = [
         weightGr: 200,
         soldCount: 180,
         variants: [
-            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 100 },
-            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 80 },
-            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50 },
-            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30 },
+            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 100, weight: 300 },
+            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 80, weight: 450 },
+            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50, weight: 600 },
+            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30, weight: 800 },
         ],
     },
     {
@@ -381,10 +381,10 @@ const productsData = [
         weightGr: 65,
         soldCount: 320,
         variants: [
-            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 90 },
-            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 70 },
-            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50 },
-            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30 },
+            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 90, weight: 180 },
+            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 70, weight: 290 },
+            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50, weight: 400 },
+            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30, weight: 550 },
         ],
     },
     {
@@ -408,10 +408,10 @@ const productsData = [
         weightGr: 70,
         soldCount: 410,
         variants: [
-            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 110 },
-            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 85 },
-            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 55 },
-            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 35 },
+            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 110, weight: 200 },
+            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 85, weight: 320 },
+            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 55, weight: 450 },
+            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 35, weight: 600 },
         ],
     },
     {
@@ -435,10 +435,10 @@ const productsData = [
         weightGr: 45,
         soldCount: 220,
         variants: [
-            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 95 },
-            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 75 },
-            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50 },
-            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30 },
+            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 95, weight: 180 },
+            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 75, weight: 280 },
+            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50, weight: 400 },
+            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30, weight: 550 },
         ],
     },
     {
@@ -462,10 +462,10 @@ const productsData = [
         weightGr: 130,
         soldCount: 150,
         variants: [
-            { name: "Small Set", price: 420000, oldPrice: 470000, stock: 80 },
-            { name: "Medium Set", price: 760000, oldPrice: 850000, stock: 60 },
-            { name: "Large Set", price: 1080000, oldPrice: 1200000, stock: 40 },
-            { name: "Family Set", price: 1390000, oldPrice: 1550000, stock: 25 },
+            { name: "Small Set", price: 420000, oldPrice: 470000, stock: 80, weight: 400 },
+            { name: "Medium Set", price: 760000, oldPrice: 850000, stock: 60, weight: 600 },
+            { name: "Large Set", price: 1080000, oldPrice: 1200000, stock: 40, weight: 800 },
+            { name: "Family Set", price: 1390000, oldPrice: 1550000, stock: 25, weight: 1100 },
         ],
     },
     {
@@ -489,10 +489,10 @@ const productsData = [
         weightGr: 85,
         soldCount: 110,
         variants: [
-            { name: "Small Set", price: 420000, oldPrice: 470000, stock: 75 },
-            { name: "Medium Set", price: 760000, oldPrice: 850000, stock: 55 },
-            { name: "Large Set", price: 1080000, oldPrice: 1200000, stock: 35 },
-            { name: "Family Set", price: 1390000, oldPrice: 1550000, stock: 20 },
+            { name: "Small Set", price: 420000, oldPrice: 470000, stock: 75, weight: 350 },
+            { name: "Medium Set", price: 760000, oldPrice: 850000, stock: 55, weight: 550 },
+            { name: "Large Set", price: 1080000, oldPrice: 1200000, stock: 35, weight: 750 },
+            { name: "Family Set", price: 1390000, oldPrice: 1550000, stock: 20, weight: 950 },
         ],
     },
     {
@@ -516,10 +516,10 @@ const productsData = [
         weightGr: 250,
         soldCount: 88,
         variants: [
-            { name: "Small Set", price: 420000, oldPrice: 470000, stock: 70 },
-            { name: "Medium Set", price: 760000, oldPrice: 850000, stock: 55 },
-            { name: "Large Set", price: 1080000, oldPrice: 1200000, stock: 35 },
-            { name: "Family Set", price: 1390000, oldPrice: 1550000, stock: 20 },
+            { name: "Small Set", price: 420000, oldPrice: 470000, stock: 70, weight: 450 },
+            { name: "Medium Set", price: 760000, oldPrice: 850000, stock: 55, weight: 650 },
+            { name: "Large Set", price: 1080000, oldPrice: 1200000, stock: 35, weight: 850 },
+            { name: "Family Set", price: 1390000, oldPrice: 1550000, stock: 20, weight: 1050 },
         ],
     },
     {
@@ -543,10 +543,10 @@ const productsData = [
         weightGr: 145,
         soldCount: 45,
         variants: [
-            { name: "Small Set", price: 550000, oldPrice: 620000, stock: 80 },
-            { name: "Medium Set", price: 990000, oldPrice: 1100000, stock: 60 },
-            { name: "Large Set", price: 1420000, oldPrice: 1600000, stock: 40 },
-            { name: "Family Set", price: 1850000, oldPrice: 2100000, stock: 25 },
+            { name: "Small Set", price: 550000, oldPrice: 620000, stock: 80, weight: 550 },
+            { name: "Medium Set", price: 990000, oldPrice: 1100000, stock: 60, weight: 800 },
+            { name: "Large Set", price: 1420000, oldPrice: 1600000, stock: 40, weight: 1050 },
+            { name: "Family Set", price: 1850000, oldPrice: 2100000, stock: 25, weight: 1300 },
         ],
     },
     {
@@ -570,10 +570,10 @@ const productsData = [
         weightGr: 70,
         soldCount: 190,
         variants: [
-            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 90 },
-            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 70 },
-            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50 },
-            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30 },
+            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 90, weight: 200 },
+            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 70, weight: 320 },
+            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 50, weight: 450 },
+            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 30, weight: 600 },
         ],
     },
     {
@@ -597,10 +597,10 @@ const productsData = [
         weightGr: 100,
         soldCount: 95,
         variants: [
-            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 70 },
-            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 55 },
-            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 35 },
-            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 20 },
+            { name: "Small Set", price: 288000, oldPrice: 320000, stock: 70, weight: 280 },
+            { name: "Medium Set", price: 520000, oldPrice: 580000, stock: 55, weight: 400 },
+            { name: "Large Set", price: 750000, oldPrice: 830000, stock: 35, weight: 550 },
+            { name: "Family Set", price: 980000, oldPrice: 1080000, stock: 20, weight: 700 },
         ],
     }
 ];
@@ -665,7 +665,7 @@ const seedProducts = async () => {
                 const variant = await ProductVariants.create({
                     product_id: product.id,
                     variant_name: v.name,
-                    weight: "0" // Default weight for variant if not specified in data
+                    weight: v.weight ? String(v.weight) : (p.weightGr ? String(p.weightGr) : "200")
                 });
 
                 await ProductVariantPrices.create({
