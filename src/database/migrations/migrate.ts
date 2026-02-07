@@ -31,10 +31,14 @@ import Banners from "../../modules/banner/models/BannerModel";
 export const syncDB = async () => {
     try {
         // Order matters for constraints
-        // Order matters for constraints
-        await db.sync({ alter: true }); // Use alter instead of force to preserve data
-        console.log("✅ Database synced successfully");
+        // DISABLED: db.sync runs on every restart and is very slow
+        // Only enable this when you need to update database schema
+        // await db.sync({ alter: true }); // Use alter instead of force to preserve data
+
+        // Just test the connection instead
+        await db.authenticate();
+        console.log("✅ Database connected successfully");
     } catch (err) {
-        console.error("❌ Database sync failed:", err);
+        console.error("❌ Database connection failed:", err);
     }
 };

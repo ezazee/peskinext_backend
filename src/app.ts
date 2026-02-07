@@ -24,6 +24,7 @@ import ReviewRoute from "./modules/review/ReviewRoute";
 import CouponRoute from "./modules/coupon/CouponRoute";
 import TransactionRoute from "./modules/transaction/TransactionRoute";
 import InvoiceRoute from "./modules/invoice/InvoiceRoute";
+import PaymentRoute from "./modules/payment/PaymentRoute";
 
 const app: Express = express();
 
@@ -86,6 +87,7 @@ import BannerRoute from "./modules/banner/BannerRoute";
 apiV1.use("/", BannerRoute);
 apiV1.use("/", TransactionRoute);
 apiV1.use("/", InvoiceRoute);
+apiV1.use("/", PaymentRoute);
 
 app.use("/api/v1", apiV1);
 

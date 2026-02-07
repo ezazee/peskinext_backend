@@ -1123,6 +1123,55 @@
         }
       }
     },
+    "/orders/{id}": {
+      "put": {
+        "summary": "Update Order",
+        "tags": [
+          "Order"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "address_id": {
+                    "type": "string"
+                  },
+                  "courier": {
+                    "type": "string"
+                  },
+                  "shipping_service": {
+                    "type": "string"
+                  },
+                  "shipping_cost": {
+                    "type": "number"
+                  },
+                  "total_amount": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order updated"
+          }
+        }
+      }
+    },
     "/orders/{id}/status": {
       "patch": {
         "summary": "Update Order Status",
@@ -1159,6 +1208,29 @@
         "responses": {
           "200": {
             "description": "Order status updated"
+          }
+        }
+      }
+    },
+    "/orders/detail/{id}": {
+      "get": {
+        "summary": "Get Order Details (with Auto-Cancel)",
+        "tags": [
+          "Order"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order details"
           }
         }
       }

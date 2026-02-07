@@ -58,6 +58,40 @@ router.get("/orders/:user_id", OrderController.getOrders);
 
 /**
  * @swagger
+ * /orders/{id}:
+ *   put:
+ *     summary: Update Order
+ *     tags: [Order]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               address_id:
+ *                 type: string
+ *               courier:
+ *                 type: string
+ *               shipping_service:
+ *                 type: string
+ *               shipping_cost:
+ *                 type: number
+ *               total_amount:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Order updated
+ */
+router.put("/orders/:id", OrderController.updateOrder);
+
+/**
+ * @swagger
  * /orders/{id}/status:
  *   patch:
  *     summary: Update Order Status
@@ -83,5 +117,23 @@ router.get("/orders/:user_id", OrderController.getOrders);
  *         description: Order status updated
  */
 router.patch("/orders/:id/status", OrderController.updateOrderStatus);
+
+/**
+ * @swagger
+ * /orders/detail/{id}:
+ *   get:
+ *     summary: Get Order Details (with Auto-Cancel)
+ *     tags: [Order]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Order details
+ */
+router.get("/orders/detail/:id", OrderController.getOrderDetails);
 
 export default router;

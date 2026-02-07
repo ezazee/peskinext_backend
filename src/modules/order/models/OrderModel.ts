@@ -8,7 +8,7 @@ interface OrderAttributes {
     id: string;
     user_id: string;
     address_id: string;
-    status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+    status: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
     total_amount: number;
     shipping_cost: number;
     discount: number;
@@ -23,7 +23,7 @@ class Orders extends Model<OrderAttributes, OrderCreationAttributes> implements 
     public id!: string;
     public user_id!: string;
     public address_id!: string;
-    public status!: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+    public status!: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
     public total_amount!: number;
     public shipping_cost!: number;
     public discount!: number;
@@ -38,7 +38,7 @@ Orders.init(
         user_id: { type: DataTypes.UUID, allowNull: false },
         address_id: { type: DataTypes.UUID, allowNull: false },
         status: {
-            type: DataTypes.ENUM("pending", "processing", "shipped", "delivered", "cancelled"),
+            type: DataTypes.ENUM("pending", "paid", "shipped", "delivered", "cancelled"),
             defaultValue: "pending",
         },
         total_amount: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
