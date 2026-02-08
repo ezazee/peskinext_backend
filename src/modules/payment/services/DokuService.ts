@@ -113,18 +113,23 @@ export const checkTransactionStatus = async (invoiceNumber: string): Promise<str
     try {
         const requestId = `REQ-STATUS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         const requestTimestamp = new Date().toISOString().slice(0, 19) + "Z";
+
+        // Revert to Orders API (Correct Endpoint, just Auth failed)
         const targetPath = `/orders/v1/status/${invoiceNumber}`;
 
-        // For GET request, body is empty string
-        const digest = crypto.createHash('sha256').update("").digest('base64');
+        // Digest for empty body (Standard SHA256 of empty string)
+        const digest = "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=";
 
-        const rawSignature = `Client-Id:${CLIENT_ID}\nRequest-Id:${requestId}\nRequest-Timestamp:${requestTimestamp}\nRequest-Target:${targetPath}\nDigest:${digest}`;
+        // For GET Request, Doku requires Digest in Header but EXCLUDES it from Raw Signature
+        const rawSignature = `Client-Id:${CLIENT_ID}\nRequest-Id:${requestId}\nRequest-Timestamp:${requestTimestamp}\nRequest-Target:${targetPath}`;
 
         const hmac = crypto.createHmac('sha256', SECRET_KEY || '');
         hmac.update(rawSignature);
         const signature = `HMACSHA256=${hmac.digest('base64')}`;
 
         console.log(`🔍 Checking DOKU Status for ${invoiceNumber}`);
+        // console.log("DEBUG SIGNATURE RAW:", JSON.stringify(rawSignature)); // Uncomment for debugging
+        console.log("DEBUG SIGNATURE RESULT:", signature);
 
         const response = await fetch(`${DOKU_API_URL}${targetPath}`, {
             method: 'GET',
@@ -134,7 +139,7 @@ export const checkTransactionStatus = async (invoiceNumber: string): Promise<str
                 'Request-Id': requestId,
                 'Request-Timestamp': requestTimestamp,
                 'Signature': signature,
-                'Digest': digest // Optional for GET usually but required by signature
+                'Digest': digest
             }
         });
 

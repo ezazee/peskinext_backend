@@ -144,6 +144,32 @@ export const getOrders = async (req: Request, res: Response) => {
             order: [["created_at", "DESC"]]
         });
 
+        // Proactive Check for Pending Orders (Limit to recent ones to avoid delay)
+        // We check status for orders that are 'pending' to sync with DOKU
+        for (const order of orders) {
+            if (order.status === "pending") {
+                try {
+                    const transaction = await Transaction.findOne({ where: { order_id: order.id } });
+                    if (transaction && transaction.invoice_number) {
+                        const status = await DokuService.checkTransactionStatus(transaction.invoice_number);
+                        if (status === "SUCCESS") {
+                            order.status = "paid";
+                            transaction.status = "success";
+                            await order.save();
+                            await transaction.save();
+                            console.log(`✅ Order ${order.id} synced to PAID via List Check`);
+                        } else if (status === "FAILED" || status === "EXPIRED") {
+                            // Optional: mark failed
+                            transaction.status = "failed";
+                            await transaction.save();
+                        }
+                    }
+                } catch (e) {
+                    console.error("⚠️ Failed sync in getOrders:", e);
+                }
+            }
+        }
+
         // Manually fetch product data for each order item
         const formattedOrders = await Promise.all(orders.map(async (order: any) => {
             const orderJson = order.toJSON();
