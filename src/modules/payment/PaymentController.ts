@@ -63,7 +63,7 @@ export const createPayment = async (req: Request, res: Response) => {
 
 export const handleNotification = async (req: Request, res: Response) => {
     // DOKU sends notification here
-    console.log("🔔 DOKU Notification Received:", JSON.stringify(req.body));
+    console.log("DOKU Notification Received", req.body);
 
     try {
         // DOKU usually sends 'order_id' as the Invoice Number/Reference
@@ -71,7 +71,7 @@ export const handleNotification = async (req: Request, res: Response) => {
 
         if (!invoice_number) {
             console.log("❌ Invalid notification payload: missing order_id/invoice_number");
-            return res.status(400).json({ message: "Invalid payload" });
+            return res.status(200).json({ message: "OK" }); // Return OK to stop retry? Or 400. User said Always 200.
         }
 
         // Find transaction by invoice_number
@@ -79,7 +79,7 @@ export const handleNotification = async (req: Request, res: Response) => {
 
         if (!transaction) {
             console.log(`❌ Transaction not found for invoice: ${invoice_number}`);
-            return res.status(404).json({ message: "Transaction not found" });
+            return res.status(200).json({ message: "OK" }); // Transaction not found, no point retrying
         }
 
         console.log(`✅ Transaction found: ${transaction.id}, Status: ${transaction_status}`);
@@ -93,20 +93,27 @@ export const handleNotification = async (req: Request, res: Response) => {
             // Update Order Status
             const order = await Orders.findByPk(transaction.order_id);
             if (order) {
-                order.status = "paid";
-                await order.save();
-                console.log(`✅ Order ${order.id} status updated to 'paid'`);
+                // Check if already paid to avoid double update logic
+                if (order.status !== 'paid') {
+                    order.status = "paid";
+                    await order.save();
+                    console.log(`✅ Order ${order.id} status updated to 'paid'`);
+                }
             }
         } else if (transaction_status === "FAILED") {
             transaction.status = "failed";
             transaction.doku_response = req.body;
             await transaction.save();
+            // Maybe cancel order too?
         }
 
-        res.json({ message: "Notification processed" });
+        res.status(200).json({ message: "OK" });
 
     } catch (error: any) {
         console.error("❌ Notification Error:", error);
-        res.status(500).json({ message: "Error processing notification", error: error.message });
+        // Even on error, maybe return 200 to stop Doku from retrying indefinitely if it's code bug? 
+        // But usually 500 triggers retry which is good for transient errors.
+        // User instruction: "Selalu return HTTP 200".
+        res.status(200).json({ message: "OK" });
     }
 }

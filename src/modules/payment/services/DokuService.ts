@@ -24,6 +24,7 @@ interface PaymentRequest {
     };
     payment: {
         payment_due_date: number;
+        notification_url?: string;
     };
 }
 
@@ -49,7 +50,9 @@ export const generatePaymentUrl = async (
                 phone: customerData.phone
             },
             payment: {
-                payment_due_date: 60 // 60 minutes
+                payment_due_date: 60, // 60 minutes
+                // Explicit notification URL as requested
+                notification_url: "https://peskinext-backend.vercel.app/api/v1/payment/notification"
             }
         };
 
