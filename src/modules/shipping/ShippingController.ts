@@ -241,7 +241,7 @@ export const checkOngkir = async (req: Request, res: Response) => {
                 errorMessage.includes("no courier available") ||
                 errorMessage.includes("courier option")
             ) {
-                console.warn("⚠️ Biteship API: Issue with Account/Route (Balance or No Courier).");
+                console.warn(`⚠️ Biteship API: Issue with Account/Route. Error: ${errorMessage}`);
                 console.warn("👉 Switching to MOCK DATA so Frontend can be tested.");
 
                 return res.json({
