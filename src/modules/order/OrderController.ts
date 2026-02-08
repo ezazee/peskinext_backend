@@ -5,6 +5,8 @@ import OrderStatusHistory from "./models/OrderStatusHistoryModel";
 import Cart from "../cart/models/CartModel";
 import Products from "../product/models/ProductModel";
 import Address from "../user/models/AddressModel";
+import Transaction from "../transaction/models/TransactionModel";
+import * as DokuService from "../payment/services/DokuService";
 import db from "../../config/database";
 
 export const createOrder = async (req: Request, res: Response) => {
@@ -244,6 +246,34 @@ export const getOrderDetails = async (req: Request, res: Response) => {
 
         if (!order) {
             return res.status(404).json({ message: "Order tidak ditemukan" });
+        }
+
+        // Proactive Status Check for Pending Orders (Sync with DOKU)
+        if (order.status === "pending") {
+            try {
+                const transaction = await Transaction.findOne({ where: { order_id: order.id } });
+                if (transaction && transaction.invoice_number) {
+                    const status = await DokuService.checkTransactionStatus(transaction.invoice_number);
+                    if (status === "SUCCESS") {
+                        // Update Transaction
+                        transaction.status = "success";
+                        await transaction.save();
+
+                        // Update Order
+                        order.status = "paid"; // Will be saved below if needed, or explicitly here
+                        await order.save();
+                        console.log(`✅ Order ${order.id} verified as PAID via Check Status`);
+                    } else if (status === "FAILED" || status === "EXPIRED") {
+                        transaction.status = "failed"; // or expired
+                        await transaction.save();
+                        // We might want to cancel the order immediately?
+                        // order.status = "cancelled";
+                        // await order.save();
+                    }
+                }
+            } catch (checkErr) {
+                console.error("⚠️ Failed to check DOKU status:", checkErr);
+            }
         }
 
         // Auto-cancel if pending and expired (e.g., > 60 minutes)

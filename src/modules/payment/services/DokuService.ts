@@ -108,3 +108,47 @@ export const verifySignature = (headers: any, body: string): boolean => {
     // Basic verification logic for notification (if needed later)
     return true;
 };
+
+export const checkTransactionStatus = async (invoiceNumber: string): Promise<string | null> => {
+    try {
+        const requestId = `REQ-STATUS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        const requestTimestamp = new Date().toISOString().slice(0, 19) + "Z";
+        const targetPath = `/orders/v1/status/${invoiceNumber}`;
+
+        // For GET request, body is empty string
+        const digest = crypto.createHash('sha256').update("").digest('base64');
+
+        const rawSignature = `Client-Id:${CLIENT_ID}\nRequest-Id:${requestId}\nRequest-Timestamp:${requestTimestamp}\nRequest-Target:${targetPath}\nDigest:${digest}`;
+
+        const hmac = crypto.createHmac('sha256', SECRET_KEY || '');
+        hmac.update(rawSignature);
+        const signature = `HMACSHA256=${hmac.digest('base64')}`;
+
+        console.log(`🔍 Checking DOKU Status for ${invoiceNumber}`);
+
+        const response = await fetch(`${DOKU_API_URL}${targetPath}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Client-Id': CLIENT_ID || '',
+                'Request-Id': requestId,
+                'Request-Timestamp': requestTimestamp,
+                'Signature': signature,
+                'Digest': digest // Optional for GET usually but required by signature
+            }
+        });
+
+        const data = await response.json() as any;
+        console.log(`🔍 Doku Status Response for ${invoiceNumber}:`, JSON.stringify(data));
+
+        if (response.ok && data.transaction?.status) {
+            return data.transaction.status; // "SUCCESS", "FAILED", "PENDING"
+        }
+
+        return null;
+
+    } catch (error: any) {
+        console.error("❌ Error checking transaction status:", error);
+        return null; // Don't throw, just return null so we don't break the UI
+    }
+};
