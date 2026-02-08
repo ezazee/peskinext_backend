@@ -203,18 +203,15 @@ export const checkOngkir = async (req: Request, res: Response) => {
         }
 
         // 5. Get Origin Area ID
-        // Default fallback if not in env (e.g., Jakarta Selatan: ID usually fixed, but better from env)
-        // You should ask client for their Store Address Area ID.
-        // For now, let's try to load from ENV or default to a common one if missing (Risky).
-        // Better: require logic to resolve store address.
-        const originAreaId = process.env.BITESHIP_ORIGIN_AREA_ID || "IDnP6811"; // Example fallback (Jakarta Selatan) or error handling
+        // Default fallback (Use Local ID as safe fallback)
+        const originAreaId = process.env.BITESHIP_ORIGIN_AREA_ID || "IDNP6IDNC148IDND845IDZ12810";
 
         // 6. Call Biteship Rates
         const ratesUrl = "https://api.biteship.com/v1/rates/couriers";
         const body = {
             origin_area_id: originAreaId,
             destination_area_id: destinationAreaId,
-            couriers: "jne,sicepat,jnt,ice,anteraja,idexpress,ninja,lion,sap,rpx,paxel,mrspeedy,borzo,lalamove,deliveree,grab",
+            couriers: "jne,sicepat,jnt,anteraja,gojek,grab", // Restricted list to avoid "no courier available" error
             items: itemsForBiteship
         };
 
