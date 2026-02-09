@@ -39,7 +39,7 @@ OrderStatusHistory.init(
     }
 );
 
-Orders.hasMany(OrderStatusHistory, { foreignKey: "order_id", as: "history" });
+Orders.hasMany(OrderStatusHistory, { foreignKey: "order_id", as: "order_status_history" });
 OrderStatusHistory.belongsTo(Orders, { foreignKey: "order_id" });
 
 export default OrderStatusHistory;

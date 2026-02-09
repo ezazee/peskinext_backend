@@ -11,6 +11,21 @@ export const getAllProducts = async (req: Request, res: Response) => {
     }
 };
 
+export const calculatePrice = async (req: Request, res: Response) => {
+    try {
+        const { productId, variantId, qty, channel } = req.body;
+        const result = await ProductService.calculateProductPrice({
+            productId,
+            variantId: Number(variantId),
+            qty: Number(qty),
+            channel: channel as string
+        });
+        res.json(result);
+    } catch (error: any) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
 export const getProductDetail = async (req: Request, res: Response) => {
     try {
         const product = await ProductService.getProductDetail(req.params.productId as string, req.query.channel as string);

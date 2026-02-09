@@ -11,8 +11,10 @@ interface OrderAttributes {
     status: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
     total_amount: number;
     shipping_cost: number;
+    original_shipping_cost: number; // Base shipping price before discount
     discount: number;
     courier: string;
+    tracking_number?: string;
     created_at?: Date;
     updated_at?: Date;
 }
@@ -26,8 +28,10 @@ class Orders extends Model<OrderAttributes, OrderCreationAttributes> implements 
     public status!: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
     public total_amount!: number;
     public shipping_cost!: number;
+    public original_shipping_cost!: number;
     public discount!: number;
     public courier!: string;
+    public tracking_number!: string;
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
 }
@@ -43,8 +47,10 @@ Orders.init(
         },
         total_amount: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
         shipping_cost: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
+        original_shipping_cost: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0 },
         discount: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0 },
         courier: { type: DataTypes.STRING, allowNull: false },
+        tracking_number: { type: DataTypes.STRING, allowNull: true },
     },
     {
         sequelize: db,

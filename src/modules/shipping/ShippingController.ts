@@ -92,13 +92,35 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
 
 
+const fetchWithRetry = async (url: string, options: any, retries = 3, backoff = 1000) => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const res = await fetch(url, options);
+            return res;
+        } catch (err: any) {
+            const isLastAttempt = i === retries - 1;
+            if (isLastAttempt) throw err;
+
+            // Retry on network errors
+            if (err.code === 'EAI_AGAIN' || err.code === 'ETIMEDOUT' || err.message.includes('network') || err.type === 'system') {
+                console.warn(`⚠️ Fetch failed (attempt ${i + 1}/${retries}). Retrying in ${backoff}ms...`, err.message);
+                await new Promise(r => setTimeout(r, backoff));
+                backoff *= 2;
+                continue;
+            }
+            throw err;
+        }
+    }
+    throw new Error("Fetch failed");
+};
+
 const resolveAreaId = async (query: string): Promise<string | null> => {
     try {
         if (!query) return null;
         console.log(`🔍 resolveAreaId looking for: '${query}'`);
         const apiKey = process.env.BITESHIP_API_KEY;
         const url = `https://api.biteship.com/v1/maps/areas?countries=ID&input=${encodeURIComponent(query)}&type=single`;
-        const res = await fetch(url, {
+        const res = await fetchWithRetry(url, {
             headers: { "Authorization": `Bearer ${apiKey}` }
         });
         const data = await res.json() as any;
@@ -215,7 +237,7 @@ export const checkOngkir = async (req: Request, res: Response) => {
             items: itemsForBiteship
         };
 
-        const ratesRes = await fetch(ratesUrl, {
+        const ratesRes = await fetchWithRetry(ratesUrl, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${apiKey}`,

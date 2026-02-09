@@ -1,11 +1,13 @@
 import { Request, Response } from "express";
 import Orders from "./models/OrderModel";
+import * as NotificationService from "../notification/NotificationService";
 import OrderItems from "./models/OrderItemModel";
 import OrderStatusHistory from "./models/OrderStatusHistoryModel";
 import Cart from "../cart/models/CartModel";
 import Products from "../product/models/ProductModel";
 import Address from "../user/models/AddressModel";
 import Transaction from "../transaction/models/TransactionModel";
+import Users from "../user/models/UserModel";
 import * as DokuService from "../payment/services/DokuService";
 import db from "../../config/database";
 
@@ -93,6 +95,7 @@ export const createOrder = async (req: Request, res: Response) => {
                 address_id: finalAddressId,
                 total_amount: totalAmount,
                 shipping_cost: parseFloat(shipping_cost || 0),
+                original_shipping_cost: parseFloat(shipping_cost || 0), // Initially same as shipping_cost
                 discount,
                 courier: courier || "pending", // Temporary value
                 status: "pending"
@@ -190,6 +193,7 @@ export const getOrders = async (req: Request, res: Response) => {
                 items: itemsWithProducts,
                 total_amount: parseFloat(order.total_amount),
                 shipping_cost: parseFloat(order.shipping_cost),
+                original_shipping_cost: parseFloat(order.original_shipping_cost || order.shipping_cost),
                 discount: parseFloat(order.discount),
             };
         }));
@@ -234,7 +238,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 export const updateOrder = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { address_id, courier, shipping_service, shipping_cost, total_amount } = req.body;
+        const { address_id, courier, shipping_service, shipping_cost, original_shipping_cost, discount, total_amount } = req.body;
 
         const order = await Orders.findByPk(id as string);
         if (!order) {
@@ -246,6 +250,8 @@ export const updateOrder = async (req: Request, res: Response) => {
         if (courier !== undefined) order.courier = courier;
         if (shipping_service !== undefined) (order as any).shipping_service = shipping_service;
         if (shipping_cost !== undefined) order.shipping_cost = parseFloat(shipping_cost);
+        if (original_shipping_cost !== undefined) order.original_shipping_cost = parseFloat(original_shipping_cost);
+        if (discount !== undefined) order.discount = parseFloat(discount);
         if (total_amount !== undefined) order.total_amount = parseFloat(total_amount);
 
         await order.save();
@@ -263,11 +269,22 @@ export const updateOrder = async (req: Request, res: Response) => {
 export const getOrderDetails = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+
         const order = await Orders.findByPk(id as string, {
-            include: [{
-                model: OrderItems,
-                as: "items"
-            }]
+            include: [
+                { model: Users, as: "user", attributes: ["id", "name", "email"] },
+                { model: Address, as: "address" },
+                {
+                    model: OrderItems,
+                    as: "items",
+                    include: [{
+                        model: Products,
+                        as: "product",
+                        attributes: ["id", "name", "slug", "front_image", "type", "weight_gr"]
+                    }]
+                },
+                { model: OrderStatusHistory, as: "order_status_history", order: [["created_at", "DESC"]] },
+            ],
         });
 
         if (!order) {
@@ -322,10 +339,104 @@ export const getOrderDetails = async (req: Request, res: Response) => {
             }
         }
 
-        res.json(order);
+        const responseData = {
+            ...order.toJSON(),
+            shipping_cost: parseFloat(order.shipping_cost as any),
+            original_shipping_cost: parseFloat(order.original_shipping_cost as any || order.shipping_cost as any),
+            discount: parseFloat(order.discount as any),
+            total_amount: parseFloat(order.total_amount as any),
+        };
+
+        res.json(responseData);
     } catch (err: any) {
         console.error("❌ Error getOrderDetails:", err);
         res.status(500).json({ message: "Gagal mengambil detail order", error: err.message });
+    }
+};
+
+export const shipOrder = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { tracking_number } = req.body;
+
+        if (!tracking_number) {
+            return res.status(400).json({ message: "Nomor Resi wajib diisi" });
+        }
+
+        const order = await Orders.findByPk(id as string);
+        if (!order) {
+            return res.status(404).json({ message: "Order tidak ditemukan" });
+        }
+
+        // if (order.status !== 'paid' && order.status !== 'processed') ... allow flexibility
+
+        order.status = "shipped";
+        order.tracking_number = tracking_number;
+        await order.save();
+
+        await OrderStatusHistory.create({
+            order_id: order.id,
+            status: "shipped",
+            note: `Pesanan dikirim. Resi: ${tracking_number}`,
+        });
+
+        // 3. Order Shipped Notification
+        await NotificationService.createNotification({
+            user_id: order.user_id,
+            title: "🚚 Paket Sedang Dikirim",
+            message: `Pesanan #${order.id} sedang dalam perjalanan. Resi: ${tracking_number}`,
+            type: "info",
+            category: "transaction",
+            status: "ongoing",
+            actionUrl: `/orders/${order.id}`,
+            metadata: { order_id: order.id, tracking_number }
+        });
+
+        res.json({
+            message: "Order berhasil dikirim (Shipped)",
+            order: order.toJSON()
+        });
+    } catch (err: any) {
+        console.error("❌ Error shipOrder:", err);
+        res.status(500).json({ message: "Gagal update status pengiriman", error: err.message });
+    }
+};
+
+export const completeOrder = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const order = await Orders.findByPk(id as string);
+
+        if (!order) {
+            return res.status(404).json({ message: "Order tidak ditemukan" });
+        }
+
+        order.status = "delivered";
+        await order.save();
+
+        await OrderStatusHistory.create({
+            order_id: order.id,
+            status: "delivered",
+            note: "Pesanan diterima oleh pelanggan",
+        });
+
+        // 4. Order Delivered (Completed) Notification
+        await NotificationService.createNotification({
+            user_id: order.user_id,
+            title: "✅ Pesanan Telah Diterima",
+            message: `Terima kasih! Pesanan #${order.id} telah selesai. Jangan lupa beri ulasan ya!`,
+            type: "success",
+            category: "transaction",
+            status: "completed",
+            actionUrl: `/orders/${order.id}`,
+            metadata: { order_id: order.id }
+        });
+
+        res.json({ message: "Pesanan selesai (Diterima)" });
+
+    } catch (err: any) {
+        console.error("❌ Error completeOrder:", err);
+        res.status(500).json({ message: "Gagal menyelesaikan pesanan", error: err.message });
     }
 };
 

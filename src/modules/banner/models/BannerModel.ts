@@ -3,7 +3,7 @@ import db from "../../../config/database";
 
 interface BannerAttributes {
     id?: number;
-    section: "main" | "carousel" | "tiles";
+    section: "main" | "carousel" | "tiles" | "popup" | "welcome" | "promo_mobile" | "promo_desktop" | "gallery_carousel" | "gallery_single" | "bundle";
     image_url: string;
     alt_text: string;
     redirect_url?: string;
@@ -13,7 +13,7 @@ interface BannerAttributes {
 
 class Banners extends Model<BannerAttributes> implements BannerAttributes {
     public id!: number;
-    public section!: "main" | "carousel" | "tiles";
+    public section!: "main" | "carousel" | "tiles" | "popup" | "welcome" | "promo_mobile" | "promo_desktop" | "gallery_carousel" | "gallery_single" | "bundle";
     public image_url!: string;
     public alt_text!: string;
     public redirect_url!: string;
@@ -26,7 +26,10 @@ class Banners extends Model<BannerAttributes> implements BannerAttributes {
 
 Banners.init({
     id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-    section: { type: DataTypes.ENUM("main", "carousel", "tiles"), allowNull: false },
+    section: {
+        type: DataTypes.ENUM("main", "carousel", "tiles", "popup", "welcome", "promo_mobile", "promo_desktop", "gallery_carousel", "gallery_single", "bundle"),
+        allowNull: false
+    },
     image_url: { type: DataTypes.TEXT, allowNull: false },
     alt_text: { type: DataTypes.STRING, allowNull: false },
     redirect_url: { type: DataTypes.STRING, allowNull: true },

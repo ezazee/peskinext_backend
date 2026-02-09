@@ -28,8 +28,10 @@ import PaymentRoute from "./modules/payment/PaymentRoute";
 
 const app: Express = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// @ts-ignore
+app.use(express.json({ limit: "1mb" }));
+// @ts-ignore
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(cors({
@@ -88,6 +90,8 @@ apiV1.use("/", BannerRoute);
 apiV1.use("/", TransactionRoute);
 apiV1.use("/", InvoiceRoute);
 apiV1.use("/", PaymentRoute);
+import NotificationRoute from "./modules/notification/NotificationRoute";
+apiV1.use("/notifications", NotificationRoute);
 
 app.use("/api/v1", apiV1);
 

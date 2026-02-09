@@ -494,3 +494,83 @@ export const deleteProductVariant = async (productId: string, variantId: string)
 export const getVariantById = async (variantId: string) => {
     return await ProductVariants.findByPk(variantId);
 };
+
+export const calculateProductPrice = async (data: { productId: string, variantId: number, qty: number, channel?: string }) => {
+    const { productId, variantId, qty, channel } = data;
+    // Trigger restart 1
+
+    // 1. Validasi Input
+    if (!productId || !variantId || qty <= 0) {
+        throw new Error("Invalid input: productId, variantId, and qty > 0 are required");
+    }
+
+    // 2. Ambil Data Variant & Harga
+    const variant = await ProductVariants.findOne({
+        where: { id: Number(variantId) },
+        include: [
+            {
+                model: ProductVariantPrices,
+                as: "prices",
+                attributes: ["channel", "price", "price_strikethrough"]
+            },
+            {
+                model: ProductStocks,
+                as: "stocks",
+                attributes: ["channel", "qty", "status"]
+            },
+            {
+                model: Products, // Ambil info produk juga untuk nama/berat
+                as: "Product",
+                attributes: ["name", "weight_gr", "front_image"]
+            }
+        ]
+    });
+
+    if (!variant) {
+        throw new Error(`Varian produk tidak ditemukan (pid: ${productId}, vid: ${variantId})`);
+    }
+
+    const vJson = variant.toJSON() as any;
+    const channelQ = normChannel(channel);
+
+    // 3. Tentukan Harga (Logic sama dengan formatProductToFrontend)
+    let prices = vJson.prices || [];
+    const activePrice = prices.find((pr: any) => normChannel(pr.channel) === channelQ)
+        || prices.find((pr: any) => normChannel(pr.channel) === "default")
+        || prices[0];
+
+    if (!activePrice) {
+        throw new Error("Harga tidak tersedia untuk varian ini");
+    }
+
+    const unitPrice = Number(activePrice.price);
+    const oldPrice = activePrice.price_strikethrough ? Number(activePrice.price_strikethrough) : null;
+
+    // 4. Hitung Total Stock (Opsional: Cek availability)
+    let stocks = vJson.stocks || [];
+    // Jika channel spesifik, cek stok channel itu aja, kalau tidak, total semua?
+    // Biasanya stok end-user ambil dari total yang available
+    const totalStock = stocks.reduce((sum: number, st: any) => sum + (st.status !== 'expired' ? Number(st.qty) : 0), 0);
+
+    if (totalStock < qty) {
+        throw new Error(`Stok tidak mencukupi (Tersedia: ${totalStock})`);
+    }
+
+    // 5. Kalkulasi
+    const subtotal = unitPrice * qty;
+    const weightTotal = (vJson.weight ? Number(vJson.weight) : 0) * qty;
+
+    return {
+        product_id: productId,
+        variant_id: variantId,
+        product_name: vJson.Product?.name,
+        variant_name: vJson.variant_name,
+        image: vJson.Product?.front_image,
+        qty,
+        unit_price: unitPrice,
+        original_price: oldPrice,
+        subtotal,
+        total_weight: weightTotal,
+        stock_available: totalStock
+    };
+};

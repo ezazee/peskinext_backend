@@ -100,5 +100,6 @@ router.get("/banners", BannerController.getBanners);
  *         description: Banner created
  */
 router.post("/banners", BannerController.createBanner); // Admin only in future
+router.get("/banners/seed-popup", BannerController.seedPopup);
 
 export default router;

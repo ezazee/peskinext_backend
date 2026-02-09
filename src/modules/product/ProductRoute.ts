@@ -37,6 +37,7 @@ const router = express.Router();
  *       201:
  *         description: Product created
  */
+router.post("/products/calculate", ProductController.calculatePrice);
 router.post("/products", ProductController.createProduct);
 
 /**

@@ -31,7 +31,14 @@ export const getAllBanners = async () => {
         redirect: b.redirect_url
     }));
 
-    return { main, carousel, tiles };
+    const popup = banners.filter(b => b.section === "popup").map(b => ({
+        id: b.id,
+        src: b.image_url,
+        alt: b.alt_text,
+        redirect: b.redirect_url
+    }));
+
+    return { main, carousel, tiles, popup };
 };
 
 export const createBanner = async (data: any) => {

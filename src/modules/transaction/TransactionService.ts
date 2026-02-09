@@ -1,5 +1,6 @@
 import Transactions from "./models/TransactionModel";
 import Orders from "../order/models/OrderModel";
+import * as NotificationService from "../notification/NotificationService";
 
 export const createTransaction = async (orderId: string, amount: number, paymentChannel: string) => {
     const transaction = await Transactions.create({
@@ -31,6 +32,34 @@ export const handleCallback = async (data: any) => {
     transaction.status = status === 'success' ? 'success' : 'failed';
     transaction.doku_response = data;
     await transaction.save();
+
+    // 2. Transaction Status Update (Success/Failed)
+    const order = await Orders.findByPk(transaction.order_id);
+    if (order) {
+        if (status === 'success') {
+            await NotificationService.createNotification({
+                user_id: order.user_id,
+                title: "🎉 Pembayaran Berhasil!",
+                message: `Pembayaran untuk pesanan #${order.id} telah diterima. Kami akan segera memproses pesanan Anda.`,
+                type: "success",
+                category: "transaction",
+                status: "completed",
+                actionUrl: `/orders/${order.id}`,
+                metadata: { order_id: order.id, transaction_id: transaction.id }
+            });
+        } else if (status === 'failed') {
+            await NotificationService.createNotification({
+                user_id: order.user_id,
+                title: "⚠️ Pembayaran Pending",
+                message: `Pesanan #${order.id} menunggu pembayaran sebesar Rp${transaction.amount.toLocaleString('id-ID')}. Selesaikan segera!`,
+                type: "warning",
+                category: "transaction",
+                status: "pending_payment",
+                actionUrl: `/orders/${order.id}`,
+                metadata: { order_id: order.id, transaction_id: transaction.id }
+            });
+        }
+    }
 
     // Update Order Status
     if (status === 'success') {

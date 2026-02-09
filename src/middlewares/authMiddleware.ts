@@ -15,8 +15,28 @@ export const requireAccess = (audExpected?: string, rolesAllowed?: string[]) => 
 
     return (req: Request, res: Response, next: NextFunction) => {
         try {
-            const token = pickToken(req); // access from Bearer / header
-            if (!token) return res.status(401).json({ message: "Unauthorized" });
+            // Try to get token from Authorization header first
+            const header = req.headers.authorization || "";
+            let token = header.startsWith("Bearer ") ? header.slice(7) : null;
+
+            // If no header token, try to extract from session_token cookie
+            if (!token && req.cookies?.session_token) {
+                const sessionValue = req.cookies.session_token;
+                console.log("🍪 Session cookie found, parsing...");
+                // Parse session token format: userId:timestamp:accessToken
+                const parts = sessionValue.split(':');
+                if (parts.length >= 3) {
+                    token = parts.slice(2).join(':'); // Reconstruct token if it contains colons
+                    console.log("✅ Token extracted from cookie");
+                } else {
+                    console.log("❌ Invalid session cookie format");
+                }
+            }
+
+            if (!token) {
+                console.log("❌ No token found - cookies:", Object.keys(req.cookies || {}));
+                return res.status(401).json({ message: "Unauthorized" });
+            }
 
             const payload = jwt.verify(token, ACCESS_SECRET) as any; // {sub,role,aud,...}
 

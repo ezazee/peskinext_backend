@@ -136,4 +136,50 @@ router.patch("/orders/:id/status", OrderController.updateOrderStatus);
  */
 router.get("/orders/detail/:id", OrderController.getOrderDetails);
 
+/**
+ * @swagger
+ * /orders/{id}/ship:
+ *   put:
+ *     summary: Update Order to Shipped (Input Resi)
+ *     tags: [Order]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [tracking_number]
+ *             properties:
+ *               tracking_number:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Order shipped
+ */
+router.put("/orders/:id/ship", OrderController.shipOrder);
+
+/**
+ * @swagger
+ * /orders/{id}/complete:
+ *   put:
+ *     summary: Complete Order (Pesanan Diterima)
+ *     tags: [Order]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Order delivered
+ */
+router.put("/orders/:id/complete", OrderController.completeOrder);
+
 export default router;

@@ -28,6 +28,22 @@ interface PaymentRequest {
     };
 }
 
+// Helper for retry
+async function fetchWithRetry(url: string, options: any, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const res = await fetch(url, options);
+            return res;
+        } catch (err: any) {
+            console.warn(`⚠️ DOKU Fetch Attempt ${i + 1} failed: ${err.message}`);
+            if (i === retries - 1) throw err;
+            // Wait 1s before retry
+            await new Promise(r => setTimeout(r, 1000));
+        }
+    }
+    throw new Error("Fetch failed after retries");
+}
+
 export const generatePaymentUrl = async (
     invoiceNumber: string,
     amount: number,
@@ -50,7 +66,7 @@ export const generatePaymentUrl = async (
                 phone: customerData.phone
             },
             payment: {
-                payment_due_date: 60, // 60 minutes
+                payment_due_date: 30, // 30 minutes
                 // Explicit notification URL as requested
                 notification_url: "https://peskinext-backend.vercel.app/api/v1/payment/notification"
             }
@@ -76,7 +92,8 @@ export const generatePaymentUrl = async (
         console.log("DEBUG HEADERS - Signature:", signature);
         console.log("Payload:", jsonBody);
 
-        const response = await fetch(`${DOKU_API_URL}${targetPath}`, {
+        // Use Retry
+        const response = await fetchWithRetry(`${DOKU_API_URL}${targetPath}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
