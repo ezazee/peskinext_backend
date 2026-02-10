@@ -15,6 +15,7 @@ interface OrderAttributes {
     discount: number;
     courier: string;
     tracking_number?: string;
+    biteship_order_id?: string;
     created_at?: Date;
     updated_at?: Date;
 }
@@ -32,6 +33,7 @@ class Orders extends Model<OrderAttributes, OrderCreationAttributes> implements 
     public discount!: number;
     public courier!: string;
     public tracking_number!: string;
+    public biteship_order_id!: string;
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
 }
@@ -51,6 +53,7 @@ Orders.init(
         discount: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0 },
         courier: { type: DataTypes.STRING, allowNull: false },
         tracking_number: { type: DataTypes.STRING, allowNull: true },
+        biteship_order_id: { type: DataTypes.STRING, allowNull: true },
     },
     {
         sequelize: db,

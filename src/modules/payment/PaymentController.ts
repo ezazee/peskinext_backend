@@ -61,9 +61,13 @@ export const createPayment = async (req: Request, res: Response) => {
     }
 };
 
+import * as BiteshipService from "../shipping/services/BiteshipService"; // Import Service
+
+// ... existing imports ...
+
 export const handleNotification = async (req: Request, res: Response) => {
     // DOKU sends notification here
-    console.log("DOKU Notification Received", JSON.stringify(req.body)); // Log full body to debug
+    console.log("DOKU Notification Received", JSON.stringify(req.body));
 
     try {
         // Handle DOKU Checkout V2 (Jokul) Nested Structure
@@ -76,8 +80,6 @@ export const handleNotification = async (req: Request, res: Response) => {
         }
         if (!transaction_status) {
             transaction_status = req.body.transaction_status || req.body.payment_status_code;
-            // Note: MIP uses '0000' for success usually, need mapping check? 
-            // But Jokul uses "SUCCESS". Let's assume Jokul for now as per DokuService.
         }
 
         if (!invoice_number) {
@@ -96,8 +98,13 @@ export const handleNotification = async (req: Request, res: Response) => {
         console.log(`✅ Transaction found: ${transaction.id}, Status: ${transaction_status}`);
 
         // Update based on status
-        // Jokul: "SUCCESS", MIP: "0000" (but we assumed Jokul earlier)
         if (transaction_status === "SUCCESS" || transaction_status === "SETTLED" || transaction_status === "0000") {
+            // Prevent double processing
+            if (transaction.status === "success") {
+                console.log("ℹ️ Transaction already success, skipping processing.");
+                return res.status(200).json({ message: "OK" });
+            }
+
             transaction.status = "success";
             transaction.doku_response = req.body;
             await transaction.save();
@@ -105,23 +112,52 @@ export const handleNotification = async (req: Request, res: Response) => {
             // Update Order Status
             const order = await Orders.findByPk(transaction.order_id);
             if (order) {
-                // Check if already paid to avoid double update logic
                 if (order.status !== 'paid') {
                     order.status = "paid";
                     await order.save();
                     console.log(`✅ Order ${order.id} status updated to 'paid'`);
+
+                    // --- BITESHIP INTEGRATION START ---
+                    // Auto create shipping order
+                    const shippingResult = await BiteshipService.createBiteshipOrder(order);
+
+                    if (shippingResult.success) {
+                        console.log(`✅ Shipping Order Created: ${shippingResult.biteship_order_id}`);
+
+                        // Update Order with Shipping Info
+                        order.status = "shipped"; // Or "processed" / "ready_to_ship"
+                        order.tracking_number = shippingResult.tracking_id || "";
+                        if (shippingResult.biteship_order_id) {
+                            order.biteship_order_id = shippingResult.biteship_order_id;
+                        }
+                        await order.save();
+                        console.log(`✅ Order ${order.id} updated to 'shipped' with Tracking: ${order.tracking_number}`);
+
+                    } else {
+                        console.warn(`⚠️ Failed to create shipping order for Order ${order.id}. Manual retry required.`);
+                        // Maybe update status to "processed" instead of "shipped" so admin knows to check?
+                        // order.status = "processed"; 
+                        // await order.save();
+                    }
+                    // --- BITESHIP INTEGRATION END ---
                 }
             }
         } else if (transaction_status === "FAILED" || transaction_status === "EXPIRED") {
             transaction.status = "failed";
             transaction.doku_response = req.body;
             await transaction.save();
+            // Optionally cancel order
+            const order = await Orders.findByPk(transaction.order_id);
+            if (order && order.status === 'pending') {
+                order.status = 'cancelled';
+                await order.save();
+            }
         }
 
         res.status(200).json({ message: "OK" });
 
     } catch (error: any) {
         console.error("❌ Notification Error:", error);
-        res.status(200).json({ message: "OK" });
+        res.status(200).json({ message: "OK" }); // Always return OK to DOKU to stop retries if logic error
     }
 }
