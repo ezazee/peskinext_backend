@@ -12,7 +12,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /single:
+ * /upload/single:
  *   post:
  *     summary: Upload Single File
  *     tags: [Upload]
@@ -32,11 +32,11 @@ const router = express.Router();
  *       200:
  *         description: File uploaded
  */
-router.post("/single", UploadController.uploadSingle, UploadController.handleUploadSingle);
+router.post("/upload/single", UploadController.uploadSingle, UploadController.handleUploadSingle);
 
 /**
  * @swagger
- * /multiple:
+ * /upload/multiple:
  *   post:
  *     summary: Upload Multiple Files
  *     tags: [Upload]
@@ -58,6 +58,6 @@ router.post("/single", UploadController.uploadSingle, UploadController.handleUpl
  *       200:
  *         description: Files uploaded
  */
-router.post("/multiple", UploadController.uploadMultiple, UploadController.handleUploadMultiple);
+router.post("/upload/multiple", UploadController.uploadMultiple, UploadController.handleUploadMultiple);
 
 export default router;

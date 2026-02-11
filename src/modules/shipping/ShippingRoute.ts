@@ -60,4 +60,42 @@ router.post("/shipping/check-ongkir", ShippingController.checkOngkir);
  */
 router.post("/shipping/webhook", ShippingController.handleWebhook);
 
+/**
+ * @swagger
+ * /shipping/order/{id}:
+ *   post:
+ *     summary: Request Pickup (Create Biteship Order)
+ *     tags: [Shipping]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Order ID
+ *     responses:
+ *       200:
+ *         description: Order created successfully
+ */
+router.post("/shipping/order/:id", ShippingController.createOrders);
+
+/**
+ * @swagger
+ * /shipping/tracking/{id}:
+ *   get:
+ *     summary: Get Order Tracking
+ *     tags: [Shipping]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Order ID
+ *     responses:
+ *       200:
+ *         description: Tracking details
+ */
+router.get("/shipping/tracking/:id", ShippingController.getTracking);
+
 export default router;

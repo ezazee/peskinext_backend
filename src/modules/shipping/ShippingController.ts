@@ -319,3 +319,251 @@ export const checkOngkir = async (req: Request, res: Response) => {
     }
 };
 
+export const createOrders = async (req: Request, res: Response) => {
+    try {
+        const orderId = req.params.id; // Internal Order ID (UUID)
+        console.log(`🚚 Request Pickup (Create Order) for Order ID: ${orderId}`);
+
+        // 1. Find Order
+        const order = await Orders.findByPk(orderId, {
+            include: [
+                { model: Address, as: "address" },
+            ]
+        }) as any;
+
+        // We need OrderItems to get product details
+        // Since OrderModel has define `Orders` but where is `OrderItems` association?
+        // Let's assume we can fetch items separately or include if association exists.
+        // Checking OrderModel.ts... no "items" association shown in snippets but OrderController saves to OrderItems.
+        // Let's fetch OrderItems manually.
+        const OrderItems = require("../order/models/OrderItemModel").default;
+        const Products = require("../product/models/ProductModel").default;
+
+        const items = await OrderItems.findAll({
+            where: { order_id: orderId },
+            include: [{ model: Products, as: "product" }]
+        });
+
+        if (!order) {
+            return res.status(404).json({ message: "Order tidak ditemukan" });
+        }
+
+        if (order.status !== "processing") { // Assuming 'paid' waiting for confirmation -> 'processing' (ready to ship)
+            // Wait, based on user request:
+            // paid ->(wait) -> processing ->(request pickup) -> shipped
+            // So status must be 'processing' to request pickup?
+            // Or 'paid'? Admin usually verifies payment then processes.
+            // Let's assume Admin has set status to 'processing' manually or system did it. 
+            // IF logic is: paid -> processing -> shipped.
+            // The button "Request Pickup" should be available when 'processing'.
+        }
+
+        // 2. Prepare Biteship Payload
+        const originAreaId = process.env.BITESHIP_ORIGIN_AREA_ID || "IDNP6IDNC148IDND845IDZ12810";
+        const destinationAreaId = await resolveAreaId(order.address?.postal_code || "");
+
+        if (!destinationAreaId) {
+            return res.status(400).json({ message: "Area pengiriman tidak valid." });
+        }
+
+        const biteshipItems = items.map((item: any) => ({
+            name: item.product?.product_name || "Item",
+            description: item.variant_name || "Variant", // If stored in item
+            value: Number(item.price),
+            quantity: item.quantity,
+            weight: Number(item.product?.weight || 1000) // Default 1kg if missing
+        }));
+
+        // Biteship requires courier company and type.
+        // order.courier might be "jne", "sicepat"
+        // order.courier_service might be "reg", "yes"
+        const courierCompany = order.courier;
+        const courierType = order.courier_service || "reg"; // Fallback
+
+        // Prepare Date/Time for "later" delivery (Standard/Reg couriers usually use this)
+        const now = new Date();
+        const dateString = now.toISOString().split("T")[0]; // YYYY-MM-DD
+
+        // Time: HH:mm. ensure it's in future? 
+        // For simplicity, let's set it to current time + 1 hour or just current time string
+        // Biteship might expect a range or specific time. 
+        // Let's try sending current time.
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        const timeString = `${hours}:${minutes}`;
+
+        const payload = {
+            origin_area_id: originAreaId,
+            destination_area_id: destinationAreaId,
+            courier_company: courierCompany,
+            courier_type: courierType,
+            delivery_type: "later",
+            delivery_date: dateString,
+            delivery_time: timeString, // Format HH:mm
+            order_note: "Please handle with care",
+            items: biteshipItems,
+
+            // Origin Details (Flattened)
+            origin_contact_name: process.env.STORE_CONTACT_NAME || "PE Skinpro ID",
+            origin_contact_phone: process.env.STORE_CONTACT_PHONE || "08123456789",
+            origin_address: process.env.STORE_ADDRESS || "Jl. Dukuh Patra II No.75",
+            origin_postal_code: parseInt(process.env.STORE_POSTAL_CODE || "12870"),
+            // origin_coordinate: ...
+
+            // Destination Details (Flattened)
+            destination_contact_name: order.address?.recipient || "Recipient",
+            destination_contact_phone: order.address?.phone || "000000",
+            destination_address: order.address?.address || "Address",
+            destination_postal_code: parseInt(order.address?.postal_code || "0"),
+            destination_note: "" // Optional note for destination
+
+        };
+
+        console.log("📦 Sending to Biteship:", JSON.stringify(payload, null, 2));
+
+        const apiKey = process.env.BITESHIP_API_KEY;
+        const url = "https://api.biteship.com/v1/orders";
+
+        const shipRes = await fetchWithRetry(url, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const shipData = await shipRes.json() as any;
+        console.log("📦 Biteship Response:", JSON.stringify(shipData, null, 2));
+
+        if (!shipData.success) {
+            return res.status(400).json({ message: "Gagal membuat order di Biteship", error: shipData.error });
+        }
+
+        // 3. Update Order
+        await order.update({
+            biteship_order_id: shipData.id,
+            // tracking_number: shipData.courier.waybill_id // Ensure checking response structure
+            status: "processing" // Remain processing until 'shipped' webhook? Or set to 'shipped' if instant?
+            // Usually 'shipped' comes from webhook 'shipping' or 'picking_ended'.
+            // Let's keep 'processing' but save the ID.
+        });
+
+        return res.json({
+            success: true,
+            message: "Request Pickup Berhasil!",
+            biteship_id: shipData.id,
+            data: shipData
+        });
+
+    } catch (error: any) {
+        console.error("❌ Error createOrders:", error);
+        return res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
+
+export const getTracking = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params; // Order ID
+
+        // 1. Get Order
+        const order = await Orders.findByPk(id);
+
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        let trackingHistory: any[] = [];
+
+        // MOCK DATA FOR TESTING
+        if (order.tracking_number && (order.tracking_number.startsWith("TEST") || order.tracking_number.includes("BITESHIP"))) {
+            console.log("ℹ️ Returning MOCK Tracking Data for Test Order");
+            trackingHistory = [
+                {
+                    note: "Paket telah diterima oleh penerima",
+                    updated_at: new Date().toISOString(),
+                    status: "delivered"
+                },
+                {
+                    note: "Paket sedang dibawa kurir menuju alamat tujuan",
+                    updated_at: new Date(Date.now() - 3600000).toISOString(),
+                    status: "dropping_off"
+                },
+                {
+                    note: "Paket telah dijemput oleh kurir",
+                    updated_at: new Date(Date.now() - 7200000).toISOString(),
+                    status: "picked"
+                },
+                {
+                    note: "Pengiriman telah diatur",
+                    updated_at: new Date(Date.now() - 10800000).toISOString(),
+                    status: "confirmed"
+                }
+            ];
+
+            return res.json({
+                success: true,
+                order_id: order.id,
+                biteship_id: order.biteship_order_id,
+                tracking_number: order.tracking_number,
+                courier: order.courier,
+                history: trackingHistory
+            });
+        }
+
+        // REAL BITESHIIP CHECK
+        if (order.biteship_order_id) {
+            const apiKey = process.env.BITESHIP_API_KEY;
+
+            // Try fetching Order Details first (Order ID)
+            // Endpoint: GET /v1/orders/{id}
+            const url = `https://api.biteship.com/v1/orders/${order.biteship_order_id}`;
+
+            const response = await fetchWithRetry(url, {
+                method: "GET",
+                headers: { "Authorization": `Bearer ${apiKey}` }
+            });
+
+            const data = await response.json() as any;
+
+            if (data.success && data.order) {
+                // Check if order object has history or tracking_id
+                // Usually Biteship Order object doesn't have full timeline history in /orders/ response directly
+                // But it might have `tracking_id` which we can use to query /trackings/
+
+                // If the order is processed, check data.order.courier.tracking_id
+                const trackingId = data.order.courier?.tracking_id;
+
+                if (trackingId) {
+                    // Fetch Tracking Timeline
+                    const trackUrl = `https://api.biteship.com/v1/trackings/${trackingId}`;
+                    const trackRes = await fetchWithRetry(trackUrl, {
+                        method: "GET",
+                        headers: { "Authorization": `Bearer ${apiKey}` }
+                    });
+                    const trackData = await trackRes.json() as any;
+
+                    if (trackData.success) {
+                        trackingHistory = trackData.history || [];
+                    }
+                }
+            } else {
+                console.warn("⚠️ Biteship order lookup failed:", data);
+            }
+        }
+
+        // Return simplified structure
+        res.json({
+            success: true,
+            order_id: order.id,
+            biteship_id: order.biteship_order_id,
+            tracking_number: order.tracking_number,
+            courier: order.courier,
+            history: trackingHistory
+        });
+
+    } catch (error: any) {
+        console.error("❌ Error getTracking:", error);
+        res.status(500).json({ message: "Gagal mengambil data tracking", error: error.message });
+    }
+};

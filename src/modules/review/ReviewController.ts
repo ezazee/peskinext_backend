@@ -18,8 +18,11 @@ export const getReviews = async (req: Request, res: Response) => {
 
 export const createReview = async (req: Request, res: Response) => {
     try {
-        // Assume authMiddleware populates req.user
-        const userId = (req as any).user.userId;
+        // Auth middleware populates req.user with JWT payload {sub, role, aud}
+        const userId = (req as any).user?.sub as string;
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
         const result = await ReviewService.createReview(userId, req.body);
         res.status(201).json(result);
     } catch (error: any) {

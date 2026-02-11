@@ -5,16 +5,18 @@ import OrderItems from "./models/OrderItemModel";
 import OrderStatusHistory from "./models/OrderStatusHistoryModel";
 import Cart from "../cart/models/CartModel";
 import Products from "../product/models/ProductModel";
+import ProductVariants from "../product/models/ProductVariantModel";
 import Address from "../user/models/AddressModel";
 import Transaction from "../transaction/models/TransactionModel";
 import Users from "../user/models/UserModel";
 import * as DokuService from "../payment/services/DokuService";
+import Reviews from "../review/models/ReviewModel";
 import db from "../../config/database";
 
 export const createOrder = async (req: Request, res: Response) => {
     const t = await db.transaction();
     try {
-        const { user_id, address_id, courier, shipping_cost, coupon_id, items } = req.body;
+        const { user_id, address_id, courier, courier_service, shipping_cost, coupon_id, items } = req.body;
 
         // Use provided address_id or fallback to default address
         let finalAddressId = address_id;
@@ -98,7 +100,9 @@ export const createOrder = async (req: Request, res: Response) => {
                 original_shipping_cost: parseFloat(shipping_cost || 0), // Initially same as shipping_cost
                 discount,
                 courier: courier || "pending", // Temporary value
-                status: "pending"
+                courier_service: courier_service || null,
+                status: "pending",
+                expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours expiry
             },
             { transaction: t }
         );
@@ -177,14 +181,48 @@ export const getOrders = async (req: Request, res: Response) => {
         const formattedOrders = await Promise.all(orders.map(async (order: any) => {
             const orderJson = order.toJSON();
 
-            // Fetch product data for each item
+
+            // Fetch product and variant data for each item
             const itemsWithProducts = await Promise.all(orderJson.items.map(async (item: any) => {
                 const product = await Products.findByPk(item.product_id, {
                     attributes: ['id', 'name', 'slug', 'front_image', 'type', 'weight_gr']
                 });
+
+                let variant: any = null;
+                if (item.variant_id) {
+                    variant = await ProductVariants.findByPk(item.variant_id);
+                }
+
+                // Fetch review data for this item
+                const existingReview = await Reviews.findOne({
+                    where: {
+                        user_id: user_id,
+                        product_id: item.product_id,
+                        order_id: order.id,
+                        variant_id: item.variant_id || null
+                    }
+                });
+
+                let reviewData: any = null;
+                if (existingReview) {
+                    const reviewJson = existingReview.toJSON() as any;
+                    let images: string[] = [];
+                    try { images = JSON.parse(reviewJson.images || "[]"); } catch (e) { }
+
+                    reviewData = {
+                        id: reviewJson.id,
+                        rating: reviewJson.rating,
+                        comment: reviewJson.comment,
+                        images: images,
+                        created_at: reviewJson.created_at
+                    };
+                }
+
                 return {
                     ...item,
-                    product: product ? product.toJSON() : null
+                    product: product ? product.toJSON() : null,
+                    variant: variant ? variant.toJSON() : null,
+                    review: reviewData
                 };
             }));
 
@@ -195,8 +233,11 @@ export const getOrders = async (req: Request, res: Response) => {
                 shipping_cost: parseFloat(order.shipping_cost),
                 original_shipping_cost: parseFloat(order.original_shipping_cost || order.shipping_cost),
                 discount: parseFloat(order.discount),
+                expires_at: order.expires_at, // Ensure explicit mapping if needed, though ...orderJson might cover it
             };
         }));
+
+        console.log("🔍 [Backend Debug] Formatted Orders Sample:", formattedOrders[0]?.expires_at ? "Has Expiry" : "No Expiry", formattedOrders[0]?.expires_at);
 
         res.json(formattedOrders);
     } catch (err: any) {
@@ -277,15 +318,23 @@ export const getOrderDetails = async (req: Request, res: Response) => {
                 {
                     model: OrderItems,
                     as: "items",
-                    include: [{
-                        model: Products,
-                        as: "product",
-                        attributes: ["id", "name", "slug", "front_image", "type", "weight_gr"]
-                    }]
+                    include: [
+                        {
+                            model: Products,
+                            as: "product",
+                            attributes: ["id", "name", "slug", "front_image", "type", "weight_gr"]
+                        },
+                        {
+                            model: ProductVariants,
+                            as: "variant",
+                            attributes: ["id", "variant_name"]
+                        }
+                    ]
                 },
                 { model: OrderStatusHistory, as: "order_status_history", order: [["created_at", "DESC"]] },
             ],
         });
+        // ...
 
         if (!order) {
             return res.status(404).json({ message: "Order tidak ditemukan" });
@@ -319,19 +368,29 @@ export const getOrderDetails = async (req: Request, res: Response) => {
             }
         }
 
-        // Auto-cancel if pending and expired (e.g., > 60 minutes)
+        // Auto-cancel if pending and expired
         if (order.status === "pending") {
-            const created = new Date(order.created_at).getTime();
-            const now = new Date().getTime();
-            const diffMinutes = (now - created) / 1000 / 60;
+            const now = new Date();
+            let isExpired = false;
 
-            if (diffMinutes > 60) {
-                order.status = "cancelled";
+            if (order.expires_at) {
+                isExpired = now > new Date(order.expires_at);
+            } else {
+                // Fallback logic if no expires_at set (legacy orders) -> 24 hours
+                const created = new Date(order.created_at).getTime();
+                const diffHours = (now.getTime() - created) / 1000 / 60 / 60;
+                if (diffHours > 24) {
+                    isExpired = true;
+                }
+            }
+
+            if (isExpired) {
+                order.status = "cancelled"; // or expired
                 await order.save();
 
                 await OrderStatusHistory.create({
                     order_id: order.id,
-                    status: "cancelled",
+                    status: "expired",
                     note: "Order expired (auto-cancel)",
                 });
 
@@ -339,13 +398,56 @@ export const getOrderDetails = async (req: Request, res: Response) => {
             }
         }
 
+        // Enrich order items with review data
+        const orderJson = order.toJSON() as any;
+        const userId = orderJson.user?.id;
+
+        console.log(`📝 [Review Debug] Order: ${order.id}, User: ${userId}`);
+
+        if (orderJson.items && userId) {
+            for (const item of orderJson.items) {
+                console.log(`  Checking item: product=${item.product_id}, variant=${item.variant_id || null}`);
+
+                const existingReview = await Reviews.findOne({
+                    where: {
+                        user_id: userId,
+                        product_id: item.product_id,
+                        order_id: order.id,
+                        variant_id: item.variant_id || null
+                    }
+                });
+
+                if (existingReview) {
+                    const reviewJson = existingReview.toJSON() as any;
+                    let images: string[] = [];
+                    try { images = JSON.parse(reviewJson.images || "[]"); } catch (e) { }
+
+                    item.review = {
+                        id: reviewJson.id,
+                        rating: reviewJson.rating,
+                        comment: reviewJson.comment,
+                        images: images,
+                        created_at: reviewJson.created_at
+                    };
+                    console.log(`  ✅ Review found: rating=${reviewJson.rating}`);
+                } else {
+                    console.log(`  ❌ No review found`);
+                }
+            }
+        }
+
         const responseData = {
-            ...order.toJSON(),
+            ...orderJson,
             shipping_cost: parseFloat(order.shipping_cost as any),
             original_shipping_cost: parseFloat(order.original_shipping_cost as any || order.shipping_cost as any),
             discount: parseFloat(order.discount as any),
             total_amount: parseFloat(order.total_amount as any),
         };
+
+        // Prevent caching to ensure fresh review data
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
 
         res.json(responseData);
     } catch (err: any) {

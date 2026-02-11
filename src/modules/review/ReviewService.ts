@@ -39,7 +39,7 @@ export const getReviewsByProduct = async (productSlug: string) => {
         try { images = JSON.parse(r.images); } catch (e) { }
 
         return {
-            id: r.id, // Frontend might expect number, but string UUID is better. Frontend types allow string normally? Checked: id is number in dummy. But let's send string and see.
+            id: r.id,
             user: rJson.user ? (rJson.user.name || rJson.user.first_name) : "Anonymous",
             variant: variantName,
             comment: r.comment,
@@ -52,13 +52,32 @@ export const getReviewsByProduct = async (productSlug: string) => {
 };
 
 export const createReview = async (userId: string, data: any) => {
-    // Basic validation: User bought product? (Optional for now)
+    const { productSlug, order_id, variant_id, rating, comment, images } = data;
 
-    const { product_id, variant_id, rating, comment, images } = data;
+    // Resolve productSlug to product_id
+    const product = await Products.findOne({ where: { slug: productSlug } });
+    if (!product) throw new Error("Produk tidak ditemukan");
+
+    // Check if user already reviewed this product in this order
+    if (order_id) {
+        const existingReview = await Reviews.findOne({
+            where: {
+                user_id: userId,
+                product_id: product.id,
+                order_id,
+                variant_id: variant_id || null
+            }
+        });
+
+        if (existingReview) {
+            throw new Error("Anda sudah memberikan ulasan untuk produk ini");
+        }
+    }
 
     const review = await Reviews.create({
         user_id: userId,
-        product_id,
+        product_id: product.id,
+        order_id,
         variant_id,
         rating,
         comment,

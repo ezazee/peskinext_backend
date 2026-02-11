@@ -52,4 +52,7 @@ OrderItems.belongsTo(Orders, { foreignKey: "order_id" });
 Products.hasMany(OrderItems, { foreignKey: "product_id", as: "order_items" });
 OrderItems.belongsTo(Products, { foreignKey: "product_id", as: "product" });
 
+import ProductVariants from "../../product/models/ProductVariantModel";
+OrderItems.belongsTo(ProductVariants, { foreignKey: "variant_id", as: "variant" });
+
 export default OrderItems;

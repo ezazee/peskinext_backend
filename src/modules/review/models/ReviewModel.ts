@@ -1,4 +1,4 @@
-import { DataTypes, Model, Optional } from "sequelize";
+import { DataTypes, Model, Optional, Op } from "sequelize";
 import db from "../../../config/database";
 import Users from "../../user/models/UserModel";
 import Products from "../../product/models/ProductModel";
@@ -7,6 +7,7 @@ interface ReviewAttributes {
     id: number;
     user_id: string;
     product_id: string;
+    order_id?: string;
     variant_id?: number;
     rating: number;
     comment?: string;
@@ -21,6 +22,7 @@ class Reviews extends Model<ReviewAttributes, ReviewCreationAttributes> implemen
     public id!: number;
     public user_id!: string;
     public product_id!: string;
+    public order_id!: string;
     public variant_id!: number;
     public rating!: number;
     public comment!: string;
@@ -34,6 +36,7 @@ Reviews.init(
         id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
         user_id: { type: DataTypes.UUID, allowNull: false },
         product_id: { type: DataTypes.UUID, allowNull: false },
+        order_id: { type: DataTypes.UUID, allowNull: true }, // Nullable for backward compatibility
         variant_id: { type: DataTypes.INTEGER, allowNull: true },
         rating: { type: DataTypes.INTEGER, allowNull: false, validate: { min: 1, max: 5 } },
         comment: { type: DataTypes.TEXT },
@@ -46,6 +49,16 @@ Reviews.init(
         underscored: true,
         createdAt: "created_at",
         updatedAt: "updated_at",
+        indexes: [
+            {
+                unique: true,
+                fields: ["user_id", "product_id", "order_id", "variant_id"],
+                name: "unique_review_per_order_item",
+                where: {
+                    order_id: { [Op.ne]: null }
+                }
+            }
+        ]
     }
 );
 
