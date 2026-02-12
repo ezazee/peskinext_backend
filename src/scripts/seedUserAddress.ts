@@ -7,11 +7,11 @@ dotenv.config();
 
 (async () => {
     try {
-        console.log("🌱 Seeding Default Addresses for Users...");
+
         const users = await Users.findAll();
 
         if (users.length === 0) {
-            console.log("❌ No users found to seed.");
+
             process.exit(0);
         }
 
@@ -22,7 +22,7 @@ dotenv.config();
             const existing = await Address.findOne({ where: { user_id: user.id } });
 
             if (!existing) {
-                console.log(`Adding address for ${user.first_name}...`);
+
                 await Address.create({
                     user_id: user.id,
                     label: "Rumah",
@@ -35,17 +35,17 @@ dotenv.config();
                     is_default: true
                 });
             } else {
-                console.log(`User ${user.first_name} already has an address.`);
+
                 // Ensure at least one is default
                 const defaultAddr = await Address.findOne({ where: { user_id: user.id, is_default: true } });
                 if (!defaultAddr) {
                     await existing.update({ is_default: true });
-                    console.log(`   -> Set existing address as default.`);
+
                 }
             }
         }
 
-        console.log("✅ Seeding Addresses Completed.");
+
         process.exit(0);
     } catch (e) {
         console.error("❌ Error:", e);

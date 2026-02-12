@@ -33,7 +33,7 @@ export const signRefresh = async (user: Users, aud: string) => {
 export const loginUser = async (emailOrPhone: string, password: string, isAdmin: boolean) => {
     // Search user by email OR phone
     // We assume the input 'email' from controller might be a phone number
-    console.log("Login attempt for:", emailOrPhone);
+
     const user = await Users.findOne({
         where: {
             [Op.or]: [
@@ -44,7 +44,7 @@ export const loginUser = async (emailOrPhone: string, password: string, isAdmin:
     });
 
     if (!user) {
-        console.log("User not found for:", emailOrPhone);
+
         throw new Error("Email/Phone atau password salah");
     }
 
@@ -59,7 +59,7 @@ export const loginUser = async (emailOrPhone: string, password: string, isAdmin:
 
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) {
-        console.log("Password mismatch for:", user.email);
+
         throw new Error("Email atau password salah");
     }
 

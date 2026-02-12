@@ -8,7 +8,7 @@ const SECRET_KEY = process.env.SANDBOX_DOKU_SECRET_KEY || process.env.DOKU_SECRE
 if (!CLIENT_ID || !SECRET_KEY) {
     console.warn("⚠️ DOKU_CLIENT_ID or DOKU_SECRET_KEY is missing in environment variables.");
 } else {
-    console.log(`✅ DOKU Service initialized. Client-Id: ${CLIENT_ID}`);
+
 }
 
 interface PaymentRequest {
@@ -86,11 +86,7 @@ export const generatePaymentUrl = async (
         hmac.update(rawSignature);
         const signature = `HMACSHA256=${hmac.digest('base64')}`;
 
-        console.log(`🚀 Sending DOKU Request to ${DOKU_API_URL}${targetPath}`);
-        console.log("DEBUG ENV VARS:", { CLIENT_ID: CLIENT_ID, SECRET_KEY_LEN: SECRET_KEY?.length });
-        console.log("DEBUG HEADERS - Client-Id:", CLIENT_ID);
-        console.log("DEBUG HEADERS - Signature:", signature);
-        console.log("Payload:", jsonBody);
+
 
         // Use Retry
         const response = await fetchWithRetry(`${DOKU_API_URL}${targetPath}`, {
@@ -144,9 +140,7 @@ export const checkTransactionStatus = async (invoiceNumber: string): Promise<str
         hmac.update(rawSignature);
         const signature = `HMACSHA256=${hmac.digest('base64')}`;
 
-        console.log(`🔍 Checking DOKU Status for ${invoiceNumber}`);
-        // console.log("DEBUG SIGNATURE RAW:", JSON.stringify(rawSignature)); // Uncomment for debugging
-        console.log("DEBUG SIGNATURE RESULT:", signature);
+
 
         const response = await fetch(`${DOKU_API_URL}${targetPath}`, {
             method: 'GET',
@@ -161,7 +155,7 @@ export const checkTransactionStatus = async (invoiceNumber: string): Promise<str
         });
 
         const data = await response.json() as any;
-        console.log(`🔍 Doku Status Response for ${invoiceNumber}:`, JSON.stringify(data));
+
 
         if (response.ok && data.transaction?.status) {
             return data.transaction.status; // "SUCCESS", "FAILED", "PENDING"

@@ -164,7 +164,7 @@ export const getOrders = async (req: Request, res: Response) => {
                             transaction.status = "success";
                             await order.save();
                             await transaction.save();
-                            console.log(`✅ Order ${order.id} synced to PAID via List Check`);
+
                         } else if (status === "FAILED" || status === "EXPIRED") {
                             // Optional: mark failed
                             transaction.status = "failed";
@@ -237,7 +237,7 @@ export const getOrders = async (req: Request, res: Response) => {
             };
         }));
 
-        console.log("🔍 [Backend Debug] Formatted Orders Sample:", formattedOrders[0]?.expires_at ? "Has Expiry" : "No Expiry", formattedOrders[0]?.expires_at);
+
 
         res.json(formattedOrders);
     } catch (err: any) {
@@ -354,7 +354,7 @@ export const getOrderDetails = async (req: Request, res: Response) => {
                         // Update Order
                         order.status = "paid"; // Will be saved below if needed, or explicitly here
                         await order.save();
-                        console.log(`✅ Order ${order.id} verified as PAID via Check Status`);
+
                     } else if (status === "FAILED" || status === "EXPIRED") {
                         transaction.status = "failed"; // or expired
                         await transaction.save();
@@ -394,7 +394,7 @@ export const getOrderDetails = async (req: Request, res: Response) => {
                     note: "Order expired (auto-cancel)",
                 });
 
-                console.log(`⚠️ Order ${order.id} auto-cancelled (expired)`);
+
             }
         }
 
@@ -402,11 +402,11 @@ export const getOrderDetails = async (req: Request, res: Response) => {
         const orderJson = order.toJSON() as any;
         const userId = orderJson.user?.id;
 
-        console.log(`📝 [Review Debug] Order: ${order.id}, User: ${userId}`);
+
 
         if (orderJson.items && userId) {
             for (const item of orderJson.items) {
-                console.log(`  Checking item: product=${item.product_id}, variant=${item.variant_id || null}`);
+
 
                 const existingReview = await Reviews.findOne({
                     where: {
@@ -429,9 +429,7 @@ export const getOrderDetails = async (req: Request, res: Response) => {
                         images: images,
                         created_at: reviewJson.created_at
                     };
-                    console.log(`  ✅ Review found: rating=${reviewJson.rating}`);
-                } else {
-                    console.log(`  ❌ No review found`);
+
                 }
             }
         }

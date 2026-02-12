@@ -67,7 +67,7 @@ import * as BiteshipService from "../shipping/services/BiteshipService"; // Impo
 
 export const handleNotification = async (req: Request, res: Response) => {
     // DOKU sends notification here
-    console.log("DOKU Notification Received", JSON.stringify(req.body));
+
 
     try {
         // Handle DOKU Checkout V2 (Jokul) Nested Structure
@@ -83,7 +83,7 @@ export const handleNotification = async (req: Request, res: Response) => {
         }
 
         if (!invoice_number) {
-            console.log("❌ Invalid notification payload: missing invoice_number", req.body);
+
             return res.status(200).json({ message: "OK" });
         }
 
@@ -91,17 +91,17 @@ export const handleNotification = async (req: Request, res: Response) => {
         const transaction = await Transaction.findOne({ where: { invoice_number } });
 
         if (!transaction) {
-            console.log(`❌ Transaction not found for invoice: ${invoice_number}`);
+
             return res.status(200).json({ message: "OK" });
         }
 
-        console.log(`✅ Transaction found: ${transaction.id}, Status: ${transaction_status}`);
+
 
         // Update based on status
         if (transaction_status === "SUCCESS" || transaction_status === "SETTLED" || transaction_status === "0000") {
             // Prevent double processing
             if (transaction.status === "success") {
-                console.log("ℹ️ Transaction already success, skipping processing.");
+
                 return res.status(200).json({ message: "OK" });
             }
 
@@ -115,14 +115,14 @@ export const handleNotification = async (req: Request, res: Response) => {
                 if (order.status !== 'paid') {
                     order.status = "paid";
                     await order.save();
-                    console.log(`✅ Order ${order.id} status updated to 'paid'`);
+
 
                     // --- BITESHIP INTEGRATION START ---
                     // Auto create shipping order
                     const shippingResult = await BiteshipService.createBiteshipOrder(order);
 
                     if (shippingResult.success) {
-                        console.log(`✅ Shipping Order Created: ${shippingResult.biteship_order_id}`);
+
 
                         // Update Order with Shipping Info
                         order.status = "shipped"; // Or "processed" / "ready_to_ship"
@@ -131,7 +131,7 @@ export const handleNotification = async (req: Request, res: Response) => {
                             order.biteship_order_id = shippingResult.biteship_order_id;
                         }
                         await order.save();
-                        console.log(`✅ Order ${order.id} updated to 'shipped' with Tracking: ${order.tracking_number}`);
+
 
                     } else {
                         console.warn(`⚠️ Failed to create shipping order for Order ${order.id}. Manual retry required.`);

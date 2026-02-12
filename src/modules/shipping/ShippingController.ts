@@ -17,7 +17,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
         if (!secret) {
             console.warn("⚠️ Biteship Webhook: Secret not defined in env. Skipping validation.");
         } else if (!signature) {
-            console.log("ℹ️ Biteship Webhook: No signature found. Assuming installation/test ping.");
+
             return res.status(200).json({ success: true, message: "Webhook endpoint is active" });
         }
 
@@ -41,7 +41,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
         // 2. Handle Event
         const event = req.body.event;
-        console.log("🔔 Biteship Webhook Event:", event);
+
 
         if (event === "order.status") {
             const { id, status } = req.body.payload;
@@ -74,7 +74,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
                     if (newStatus !== order.status) {
                         await order.update({ status: newStatus });
-                        console.log(`✅ Order ${externalId} updated to ${newStatus}`);
+
                     }
                 } else {
                     console.warn(`⚠️ Order with external_id ${externalId} not found`);
@@ -117,14 +117,14 @@ const fetchWithRetry = async (url: string, options: any, retries = 3, backoff = 
 const resolveAreaId = async (query: string): Promise<string | null> => {
     try {
         if (!query) return null;
-        console.log(`🔍 resolveAreaId looking for: '${query}'`);
+
         const apiKey = process.env.BITESHIP_API_KEY;
         const url = `https://api.biteship.com/v1/maps/areas?countries=ID&input=${encodeURIComponent(query)}&type=single`;
         const res = await fetchWithRetry(url, {
             headers: { "Authorization": `Bearer ${apiKey}` }
         });
         const data = await res.json() as any;
-        console.log(`🔍 resolveAreaId response for '${query}':`, JSON.stringify(data));
+
 
         if (data.success && data.areas && data.areas.length > 0) {
             return data.areas[0].id;
@@ -139,10 +139,10 @@ const resolveAreaId = async (query: string): Promise<string | null> => {
 export const checkOngkir = async (req: Request, res: Response) => {
     try {
         const { user_id } = req.body;
-        console.log("🔍 checkOngkir Request Body:", JSON.stringify(req.body, null, 2));
+
 
         const apiKey = process.env.BITESHIP_API_KEY;
-        console.log("🔍 keyType:", apiKey?.substring(0, 15) + "...");
+
 
         if (!apiKey) {
             return res.status(500).json({ message: "Biteship API Key missing" });
@@ -151,9 +151,9 @@ export const checkOngkir = async (req: Request, res: Response) => {
         // 1. Get User Address
         // Use true as boolean
         const address = await Address.findOne({ where: { user_id, is_default: true } });
-        console.log("🔍 Address Found:", address ? "YES" : "NO", address?.id);
+
         if (address) {
-            console.log(`🔍 Address Details: Postal=${address.postal_code}, District=${address.districts}, ID=${address.id}`);
+
         }
 
         if (!address) return res.status(400).json({ message: "Alamat default tidak ditemukan" });
@@ -322,7 +322,7 @@ export const checkOngkir = async (req: Request, res: Response) => {
 export const createOrders = async (req: Request, res: Response) => {
     try {
         const orderId = req.params.id; // Internal Order ID (UUID)
-        console.log(`🚚 Request Pickup (Create Order) for Order ID: ${orderId}`);
+
 
         // 1. Find Order
         const order = await Orders.findByPk(orderId, {
@@ -419,7 +419,7 @@ export const createOrders = async (req: Request, res: Response) => {
 
         };
 
-        console.log("📦 Sending to Biteship:", JSON.stringify(payload, null, 2));
+
 
         const apiKey = process.env.BITESHIP_API_KEY;
         const url = "https://api.biteship.com/v1/orders";
@@ -434,7 +434,7 @@ export const createOrders = async (req: Request, res: Response) => {
         });
 
         const shipData = await shipRes.json() as any;
-        console.log("📦 Biteship Response:", JSON.stringify(shipData, null, 2));
+
 
         if (!shipData.success) {
             return res.status(400).json({ message: "Gagal membuat order di Biteship", error: shipData.error });
@@ -477,7 +477,7 @@ export const getTracking = async (req: Request, res: Response) => {
 
         // MOCK DATA FOR TESTING
         if (order.tracking_number && (order.tracking_number.startsWith("TEST") || order.tracking_number.includes("BITESHIP"))) {
-            console.log("ℹ️ Returning MOCK Tracking Data for Test Order");
+
             trackingHistory = [
                 {
                     note: "Paket telah diterima oleh penerima",

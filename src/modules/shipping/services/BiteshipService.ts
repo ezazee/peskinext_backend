@@ -18,7 +18,7 @@ const ORIGIN = {
 
 export const createBiteshipOrder = async (order: Orders) => {
     try {
-        console.log(`📦 Creating Biteship Order for Order ID: ${order.id}`);
+
 
         if (!BITESHIP_API_KEY) {
             throw new Error("BITESHIP_API_KEY is missing");
@@ -82,7 +82,7 @@ export const createBiteshipOrder = async (order: Orders) => {
             note: `Order #${fullOrder.id}`
         };
 
-        console.log("🚀 Biteship Payload:", JSON.stringify(payload, null, 2));
+
 
         // 4. Send Request
         const response = await axios.post(BITESHIP_API_URL, payload, {
@@ -93,7 +93,7 @@ export const createBiteshipOrder = async (order: Orders) => {
         });
 
         const data = response.data;
-        console.log("✅ Biteship Order Created:", data);
+
 
         if (data.success && data.id) {
             return {

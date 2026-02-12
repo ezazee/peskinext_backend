@@ -19,7 +19,7 @@ export const getTransactionByOrder = async (orderId: string) => {
 
 // DOKU Callback Handler
 export const handleCallback = async (data: any) => {
-    console.log("🔔 DOKU Callback received:", data);
+
 
     const { invoice_number, status } = data; // Mock payload
     const transaction = await Transactions.findOne({ where: { invoice_number } });
@@ -28,7 +28,7 @@ export const handleCallback = async (data: any) => {
         throw new Error("Transaction not found");
     }
 
-    console.log("📝 Updating transaction status from", transaction.status, "to", status);
+
     transaction.status = status === 'success' ? 'success' : 'failed';
     transaction.doku_response = data;
     await transaction.save();
@@ -65,7 +65,7 @@ export const handleCallback = async (data: any) => {
     if (status === 'success') {
         const order = await Orders.findByPk(transaction.order_id);
         if (order) {
-            console.log("✅ Updating order status from", order.status, "to 'paid'");
+
             order.status = 'paid'; // Changed from 'processing' to 'paid'
             await order.save();
         }

@@ -104,9 +104,9 @@ export const sendForgotPasswordEmail = async (email: string, name: string, token
 
   while (attempts < maxAttempts) {
     try {
-      console.log(`[EmailService] Attempting to send email to ${email} (Attempt ${attempts + 1}/${maxAttempts})`);
+
       await transactionalEmailsApi.sendTransacEmail(sendSmtpEmail);
-      console.log(`[EmailService] Reset password email sent successfully to ${email}`);
+
       return; // Success, exit function
     } catch (error: any) {
       attempts++;
@@ -116,7 +116,7 @@ export const sendForgotPasswordEmail = async (email: string, name: string, token
       const isNetworkError = error.message && (error.message.includes("EAI_AGAIN") || error.message.includes("ENOTFOUND") || error.message.includes("ETIMEDOUT"));
 
       if (isNetworkError && attempts < maxAttempts) {
-        console.log(`[EmailService] Network error detected. Retrying in 2 seconds...`);
+
         await sleep(2000);
         continue;
       }

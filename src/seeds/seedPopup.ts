@@ -4,12 +4,12 @@ import Banners from "../modules/banner/models/BannerModel";
 const seed = async () => {
     try {
         await db.authenticate();
-        console.log("DB Connected");
+
 
         // Check if popup already exists
         const existing = await Banners.findOne({ where: { section: "popup" } });
         if (existing) {
-            console.log("Popup banner already exists. Skipping.");
+
             return;
         }
 
@@ -21,7 +21,7 @@ const seed = async () => {
             sort_order: 1,
             is_active: true
         });
-        console.log("Popup Banner seeded successfully!");
+
     } catch (e) {
         console.error("Error seeding popup:", e);
     }

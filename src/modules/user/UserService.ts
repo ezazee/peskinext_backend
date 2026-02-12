@@ -61,8 +61,7 @@ export const createUser = async (data: any) => {
 };
 
 export const updateUser = async (id: string, data: any) => {
-    console.log("DEBUG: UserService.updateUser - ID:", id);
-    console.log("DEBUG: UserService.updateUser - Data:", JSON.stringify(data, null, 2));
+
 
     const user = await Users.findByPk(id);
     if (!user) throw new Error("User tidak ditemukan");
@@ -85,7 +84,7 @@ export const updateUser = async (id: string, data: any) => {
         user.images = data.avatarUrl;
     }
 
-    console.log("DEBUG: UserService.updateUser - Saving user images:", user.images);
+
 
     await user.save();
 
