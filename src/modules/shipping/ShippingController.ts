@@ -550,6 +550,28 @@ export const getTracking = async (req: Request, res: Response) => {
             } else {
                 console.warn("⚠️ Biteship order lookup failed:", data);
             }
+        } else if (order.tracking_number && order.courier) {
+            // Manual input tracking (No biteship_order_id)
+            const apiKey = process.env.BITESHIP_API_KEY;
+            // Public Tracking API: /v1/trackings/{waybill_id}/couriers/{courier_code}
+            const courierCode = order.courier.toLowerCase(); // e.g. jne, sicepat
+            const waybillId = order.tracking_number;
+
+            const url = `https://api.biteship.com/v1/trackings/${waybillId}/couriers/${courierCode}`;
+
+            try {
+                const response = await fetchWithRetry(url, {
+                    method: "GET",
+                    headers: { "Authorization": `Bearer ${apiKey}` }
+                });
+
+                const data = await response.json() as any;
+                if (data.success && data.history) {
+                    trackingHistory = data.history;
+                }
+            } catch (err) {
+                console.warn("⚠️ Manual public tracking lookup failed:", err);
+            }
         }
 
         // Return simplified structure

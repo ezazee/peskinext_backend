@@ -102,7 +102,7 @@ export const createOrder = async (req: Request, res: Response) => {
                 courier: courier || "pending", // Temporary value
                 courier_service: courier_service || null,
                 status: "pending",
-                expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours expiry
+                expires_at: new Date(Date.now() + 30 * 60 * 1000) // 30 minutes expiry to match DOKU
             },
             { transaction: t }
         );
@@ -129,7 +129,8 @@ export const createOrder = async (req: Request, res: Response) => {
             order_id: order.id,
             total: totalAmount,
             shipping_cost,
-            courier
+            courier,
+            expires_at: order.expires_at // Added for frontend timer
         });
 
     } catch (err: any) {
@@ -226,9 +227,22 @@ export const getOrders = async (req: Request, res: Response) => {
                 };
             }));
 
+            // Fetch Invoice Number manually
+            let invoiceNumber: string | null = null;
+            const transaction = await Transaction.findOne({ where: { order_id: order.id } });
+            if (transaction) {
+                invoiceNumber = transaction.invoice_number;
+            } else {
+                // Fallback: Generate a prettier ID format
+                const dateStr = new Date(order.created_at).toISOString().slice(0, 10).replace(/-/g, "");
+                const shortId = order.id.split("-")[0].toUpperCase();
+                invoiceNumber = `INV/${dateStr}/${shortId}`;
+            }
+
             return {
                 ...orderJson,
                 items: itemsWithProducts,
+                invoiceNumber,
                 total_amount: parseFloat(order.total_amount),
                 shipping_cost: parseFloat(order.shipping_cost),
                 original_shipping_cost: parseFloat(order.original_shipping_cost || order.shipping_cost),
@@ -311,7 +325,23 @@ export const getOrderDetails = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        const order = await Orders.findByPk(id as string, {
+        let whereClause: any = { id };
+        // Check if id is NOT a UUID (e.g. starts with INV/)
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+        if (!isUuid) {
+            // Try to find transaction by invoice_number first
+            const tx = await Transaction.findOne({ where: { invoice_number: id } });
+            if (tx) {
+                whereClause = { id: tx.order_id };
+            } else {
+                // return 404 if not uuid and not found in tx
+                return res.status(404).json({ message: "Order tidak ditemukan (Invalid ID)" });
+            }
+        }
+
+        const order = await Orders.findOne({
+            where: whereClause,
             include: [
                 { model: Users, as: "user", attributes: ["id", "name", "email"] },
                 { model: Address, as: "address" },
@@ -378,8 +408,8 @@ export const getOrderDetails = async (req: Request, res: Response) => {
             } else {
                 // Fallback logic if no expires_at set (legacy orders) -> 24 hours
                 const created = new Date(order.created_at).getTime();
-                const diffHours = (now.getTime() - created) / 1000 / 60 / 60;
-                if (diffHours > 24) {
+                const diffMinutes = (now.getTime() - created) / 1000 / 60;
+                if (diffMinutes > 30) {
                     isExpired = true;
                 }
             }
@@ -434,8 +464,42 @@ export const getOrderDetails = async (req: Request, res: Response) => {
             }
         }
 
+        // Fetch Invoice Number manually if not associated
+        let invoiceNumber: string | null = null;
+        const transaction = await Transaction.findOne({ where: { order_id: order.id } });
+        if (transaction) {
+            invoiceNumber = transaction.invoice_number;
+        } else {
+            // Fallback: Generate a prettier ID format if no transaction exists yet
+            // e.g. INV/20231027/A1B2C3
+            try {
+                const dateStr = new Date(order.created_at).toISOString().slice(0, 10).replace(/-/g, "");
+                const shortId = order.id.split("-")[0].toUpperCase();
+                invoiceNumber = `INV/${dateStr}/${shortId}`;
+            } catch (e) {
+                // console.error("Error generating fallback invoice number", e);
+                invoiceNumber = `INV/UNKNOWN/${order.id.slice(0, 8)}`;
+            }
+        }
+
+        // Construct Shipping Address
+        let shippingAddress: any = null;
+        if ((order as any).address) {
+            const addr = (order as any).address;
+            shippingAddress = {
+                recipient: addr.recipient,
+                phone: addr.phone,
+                addressLine: addr.address,
+                city: addr.regencies,
+                province: addr.province,
+                postalCode: addr.postal_code
+            };
+        }
+
         const responseData = {
             ...orderJson,
+            invoiceNumber,
+            shippingAddress,
             shipping_cost: parseFloat(order.shipping_cost as any),
             original_shipping_cost: parseFloat(order.original_shipping_cost as any || order.shipping_cost as any),
             discount: parseFloat(order.discount as any),

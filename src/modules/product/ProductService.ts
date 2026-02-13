@@ -63,21 +63,34 @@ const formatProductToFrontend = (product: any, channelQuery?: string) => {
     // Calculate Product Level Price Range
     let minPrice = Infinity;
     let maxPrice = -Infinity;
+    let minOldPrice = Infinity;
+    let maxOldPrice = -Infinity;
     let hasVariants = variants.length > 0;
 
     variants.forEach((v: any) => {
         if (v.price < minPrice) minPrice = v.price;
         if (v.price > maxPrice) maxPrice = v.price;
+        if (v.oldPrice) {
+            if (v.oldPrice < minOldPrice) minOldPrice = v.oldPrice;
+            if (v.oldPrice > maxOldPrice) maxOldPrice = v.oldPrice;
+        }
     });
 
     if (!hasVariants) {
         minPrice = 0;
         maxPrice = 0;
+        minOldPrice = 0;
+        maxOldPrice = 0;
     }
 
     const priceString = minPrice === maxPrice
         ? `Rp${minPrice.toLocaleString('id-ID')}`
         : `Rp${minPrice.toLocaleString('id-ID')} - Rp${maxPrice.toLocaleString('id-ID')}`;
+
+    const oldPriceString = minOldPrice === Infinity ? undefined :
+        (minOldPrice === maxOldPrice
+            ? `Rp${minOldPrice.toLocaleString('id-ID')}`
+            : `Rp${minOldPrice.toLocaleString('id-ID')} - Rp${maxOldPrice.toLocaleString('id-ID')}`);
 
     return {
         id: p.id,
@@ -89,7 +102,7 @@ const formatProductToFrontend = (product: any, channelQuery?: string) => {
         category: p.category || "",
         sku: p.sku || "",
         price: priceString,
-        oldPrice: undefined, // Could implement range for oldPrice too if needed
+        oldPrice: oldPriceString,
         img,
         imgHover,
         galleryImages,

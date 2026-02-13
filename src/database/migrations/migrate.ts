@@ -33,7 +33,7 @@ export const syncDB = async () => {
         // Order matters for constraints
         // DISABLED: db.sync runs on every restart and is very slow
         // Only enable this when you need to update database schema
-        // await db.sync({ alter: true }); // Use alter instead of force to preserve data
+        await db.sync({ alter: true }); // Use alter instead of force to preserve data
 
 
         // Just test the connection instead

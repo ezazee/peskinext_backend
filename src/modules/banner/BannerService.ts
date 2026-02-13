@@ -7,38 +7,41 @@ export const getAllBanners = async () => {
         order: [["sort_order", "ASC"], ["created_at", "DESC"]]
     });
 
-    // Group by section for easier frontend consumption
-    const main = banners.filter(b => b.section === "main").map(b => ({
+    const mapBanner = (b: any) => ({
         id: b.id,
         src: b.image_url,
-        // If we stored mobile url in redirect_url temporarily or just send same img
-        mobileSrc: b.redirect_url || b.image_url,
+        // If we want to support mobile specifically, we check if there's a convention 
+        // but for now let's just send the data as is.
         alt: b.alt_text,
-        redirect: b.redirect_url
-    }));
+        href: b.redirect_url,
+        section: b.section
+    });
 
-    const carousel = banners.filter(b => b.section === "carousel").map(b => ({
-        id: b.id,
-        src: b.image_url,
-        alt: b.alt_text,
-        redirect: b.redirect_url
-    }));
+    const main = banners.filter(b => b.section === "main").map(mapBanner);
+    const carousel = banners.filter(b => b.section === "carousel").map(mapBanner);
+    const tiles = banners.filter(b => b.section === "tiles").map(mapBanner);
+    const popup = banners.filter(b => b.section === "popup").map(mapBanner);
+    const welcome = banners.filter(b => b.section === "welcome").map(mapBanner);
 
-    const tiles = banners.filter(b => b.section === "tiles").map(b => ({
-        id: b.id,
-        src: b.image_url,
-        alt: b.alt_text,
-        redirect: b.redirect_url
-    }));
+    // For specific events or special sections
+    const promo_mobile = banners.filter(b => b.section === "promo_mobile").map(mapBanner);
+    const promo_desktop = banners.filter(b => b.section === "promo_desktop").map(mapBanner);
+    const bundle = banners.filter(b => b.section === "bundle").map(mapBanner);
+    const gallery_carousel = banners.filter(b => b.section === "gallery_carousel").map(mapBanner);
+    const gallery_single = banners.filter(b => b.section === "gallery_single").map(mapBanner);
 
-    const popup = banners.filter(b => b.section === "popup").map(b => ({
-        id: b.id,
-        src: b.image_url,
-        alt: b.alt_text,
-        redirect: b.redirect_url
-    }));
-
-    return { main, carousel, tiles, popup };
+    return {
+        main,
+        carousel,
+        tiles,
+        popup,
+        welcome,
+        promo_mobile,
+        promo_desktop,
+        bundle,
+        gallery_carousel,
+        gallery_single
+    };
 };
 
 export const createBanner = async (data: any) => {

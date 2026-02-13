@@ -1865,6 +1865,54 @@
         }
       }
     },
+    "/shipping/order/{id}": {
+      "post": {
+        "summary": "Request Pickup (Create Biteship Order)",
+        "tags": [
+          "Shipping"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Order ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order created successfully"
+          }
+        }
+      }
+    },
+    "/shipping/tracking/{id}": {
+      "get": {
+        "summary": "Get Order Tracking",
+        "tags": [
+          "Shipping"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Order ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tracking details"
+          }
+        }
+      }
+    },
     "/transactions/callback": {
       "post": {
         "summary": "Handle Payment Callback (DOKU)",
@@ -1935,7 +1983,7 @@
         }
       }
     },
-    "/single": {
+    "/upload/single": {
       "post": {
         "summary": "Upload Single File",
         "tags": [
@@ -1970,7 +2018,7 @@
         }
       }
     },
-    "/multiple": {
+    "/upload/multiple": {
       "post": {
         "summary": "Upload Multiple Files",
         "tags": [

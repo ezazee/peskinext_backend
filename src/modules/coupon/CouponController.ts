@@ -12,10 +12,10 @@ export const getCoupons = async (req: Request, res: Response) => {
 
 export const checkCoupon = async (req: Request, res: Response) => {
     try {
-        const { code } = req.body;
-        const result = await CouponService.checkCoupon(code);
+        const { code, total, regionTag } = req.body;
+        const result = await CouponService.checkCoupon(code, total, regionTag);
         res.json(result);
     } catch (error: any) {
-        res.status(404).json({ message: error.message });
+        res.status(400).json({ message: error.message });
     }
 };
