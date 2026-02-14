@@ -6,6 +6,11 @@ import path from "path";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger";
 import fs from "fs";
+import helmet from "helmet";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
+import hpp from "hpp";
+import * as Sentry from "@sentry/node";
 
 // Import Routes
 import AuthRoute from "./modules/auth/AuthRoute";
@@ -27,6 +32,19 @@ import InvoiceRoute from "./modules/invoice/InvoiceRoute";
 import PaymentRoute from "./modules/payment/PaymentRoute";
 
 const app: Express = express();
+
+// Security Middlewares
+app.use(helmet());
+app.use(hpp());
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again after 15 minutes"
+});
+app.use(limiter);
+
+// Performance
+app.use(compression());
 
 // @ts-ignore
 app.use(express.json({ limit: "1mb" }));
@@ -106,12 +124,24 @@ app.get("/", (req: Request, res: Response) => {
     });
 });
 
+// Sentry Error Handler (Must be before any other error middleware)
+Sentry.setupExpressErrorHandler(app);
+
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: any) => {
+    // Optional: Sentry ID in response
+    // @ts-ignore
+    if (res.sentry) {
+        // @ts-ignore
+        console.error("Sentry Error ID:", res.sentry);
+    }
+
     console.error("Global Error:", err);
     res.status(err.status || 500).json({
         success: false,
         error: err.message || "Internal Server Error",
+        // @ts-ignore
+        sentry_id: res.sentry
     });
 });
 

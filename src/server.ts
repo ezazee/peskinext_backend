@@ -1,6 +1,9 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+// Sentry Instrument MUST be imported before everything else
+import "./instrument";
+
 import app from "./app";
 import { syncDB } from "./database/migrations/migrate";
 

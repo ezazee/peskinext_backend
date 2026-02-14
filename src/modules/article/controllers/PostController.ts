@@ -57,14 +57,51 @@ export const createPost = async (req: Request, res: Response) => {
 
 export const getAllPosts = async (req: Request, res: Response) => {
     try {
-        const posts = await Posts.findAll({
-            include: [
-                { model: Categories, attributes: ["id", "name", "slug"] },
-                { model: Tags, through: { attributes: [] }, attributes: ["id", "name"] },
-                { model: PostImages, as: "images", attributes: ["id", "image_url", "alt_text"] },
-            ],
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const categorySlug = req.query.category as string;
+
+        // Calculate default offset or use manual override
+        let offset = (page - 1) * limit;
+        if (req.query.offset) {
+            offset = parseInt(req.query.offset as string);
+        }
+
+        console.log("🔍 [getAllPosts] Query Params:", req.query);
+        console.log("🔍 [getAllPosts] Filtering by Category Slug:", categorySlug);
+
+        const includeOptions: any[] = [
+            {
+                model: Categories,
+                attributes: ["id", "name", "slug"],
+                // If categorySlug is present, filter by it. This creates an INNER JOIN.
+                required: !!categorySlug,
+                where: categorySlug ? { slug: categorySlug } : undefined
+            },
+            { model: Tags, through: { attributes: [] }, attributes: ["id", "name"] },
+            { model: PostImages, as: "images", attributes: ["id", "image_url", "alt_text"] },
+        ];
+
+        const { count, rows } = await Posts.findAndCountAll({
+            where: req.query.slug ? { slug: req.query.slug as string } : undefined,
+            include: includeOptions,
+            limit: limit,
+            offset: offset,
+            order: [['created_at', 'DESC']],
+            distinct: true // Important for correct count with includes
         });
-        res.json(posts);
+
+        console.log(`✅ [getAllPosts] Found ${count} posts for category: ${categorySlug || 'ALL'}`);
+
+        res.json({
+            count,
+            rows,
+            pagination: {
+                page,
+                limit,
+                totalPages: Math.ceil(count / limit)
+            }
+        });
     } catch (error: any) {
         console.error("❌ Error getAllPosts:", error);
         res.status(500).json({ message: "Failed to fetch posts" });
