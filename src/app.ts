@@ -44,9 +44,10 @@ app.use(helmet({
             scriptSrc: ["'self'", "https://cdnjs.cloudflare.com"],
             styleSrc: ["'self'", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https:"], // Allow connecting to API
+            connectSrc: ["'self'", "https:"],
         },
     },
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow CORS
 }));
 app.use(hpp());
 const limiter = rateLimit({
