@@ -33,8 +33,21 @@ import PaymentRoute from "./modules/payment/PaymentRoute";
 
 const app: Express = express();
 
+// Trust Proxy for Rate Limiting/Deployment
+app.set("trust proxy", 1);
+
 // Security Middlewares
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+            styleSrc: ["'self'", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'", "https:"], // Allow connecting to API
+        },
+    },
+}));
 app.use(hpp());
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
