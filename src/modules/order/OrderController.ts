@@ -604,3 +604,98 @@ export const completeOrder = async (req: Request, res: Response) => {
     }
 };
 
+export const getAllOrders = async (req: Request, res: Response) => {
+    try {
+        // Prevent 304
+        res.setHeader('Cache-Control', 'no-store');
+
+        console.log("Fetching all orders...");
+        const orders = await Orders.findAll({
+            include: [{
+                model: OrderItems,
+                as: "items"
+            }],
+            order: [["created_at", "DESC"]]
+        });
+        console.log(`Found ${orders.length} orders in DB`);
+
+        // Proactive Check for Pending Orders (Commented out for debug)
+        /*
+        for (const order of orders) {
+            if (order.status === "pending") {
+                try {
+                    const transaction = await Transaction.findOne({ where: { order_id: order.id } });
+                    if (transaction && transaction.invoice_number) {
+                        const status = await DokuService.checkTransactionStatus(transaction.invoice_number);
+                        if (status === "SUCCESS") {
+                            order.status = "paid";
+                            transaction.status = "success";
+                            await order.save();
+                            await transaction.save();
+                        } else if (status === "FAILED" || status === "EXPIRED") {
+                            transaction.status = "failed";
+                            await transaction.save();
+                        }
+                    }
+                } catch (e) {
+                    console.error("⚠️ Failed sync in getAllOrders:", e);
+                }
+            }
+        }
+        */
+
+        const formattedOrders = await Promise.all(orders.map(async (order: any) => {
+            const orderJson = order.toJSON();
+            const userId = order.user_id;
+
+            const itemsWithProducts = await Promise.all(orderJson.items.map(async (item: any) => {
+                const product = await Products.findByPk(item.product_id, {
+                    attributes: ['id', 'name', 'slug', 'front_image', 'type', 'weight_gr']
+                });
+
+                let variant: any = null;
+                if (item.variant_id) {
+                    variant = await ProductVariants.findByPk(item.variant_id);
+                }
+
+                return {
+                    ...item,
+                    product: product ? product.toJSON() : null,
+                    variant: variant ? variant.toJSON() : null
+                };
+            }));
+
+            let invoiceNumber: string | null = null;
+            const transaction = await Transaction.findOne({ where: { order_id: order.id } });
+            if (transaction) {
+                invoiceNumber = transaction.invoice_number;
+            } else {
+                const dateStr = new Date(order.created_at).toISOString().slice(0, 10).replace(/-/g, "");
+                const shortId = order.id.split("-")[0].toUpperCase();
+                invoiceNumber = `INV/${dateStr}/${shortId}`;
+            }
+
+            const customer = await Users.findByPk(order.user_id, { attributes: ['id', 'name', 'email'] });
+
+            return {
+                ...orderJson,
+                items: itemsWithProducts,
+                invoiceNumber,
+                customerName: customer?.name || "Unknown",
+                customerEmail: customer?.email || "Unknown",
+                total_amount: parseFloat(order.total_amount),
+                shipping_cost: parseFloat(order.shipping_cost),
+                original_shipping_cost: parseFloat(order.original_shipping_cost || order.shipping_cost),
+                discount: parseFloat(order.discount),
+                expires_at: order.expires_at,
+            };
+        }));
+
+        console.log(`Returning ${formattedOrders.length} formatted orders`);
+        res.json(formattedOrders);
+    } catch (err: any) {
+        console.error("❌ Error getAllOrders:", err);
+        res.status(500).json({ message: "Gagal mengambil semua orders", error: err.message });
+    }
+};
+

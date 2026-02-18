@@ -67,8 +67,20 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(cors({
-    origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(",") : "*",
-    credentials: true
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        // console.log("Incoming Request Origin:", origin);
+        // Allow requests with no origin (like mobile apps or curl) or if match
+        const allowedOrigins = process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(",") : [];
+        if (!origin || allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes("*")) {
+            callback(null, true);
+        } else {
+            console.warn(`CORS Warning: Origin ${origin} not in whitelist. Allowing for debug.`);
+            callback(null, true); // Allow anyway for debug
+        }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 }));
 
 import passport from "./config/passport";

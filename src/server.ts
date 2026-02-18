@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
+console.log("Environment loaded. CORS_ORIGINS:", process.env.CORS_ORIGINS);
 
 // Sentry Instrument MUST be imported before everything else
 import "./instrument";
@@ -10,7 +11,7 @@ import { syncDB } from "./database/migrations/migrate";
 const PORT = process.env.PORT || 3000;
 
 (async () => {
-    await syncDB();
+    // await syncDB();
     // @ts-ignore
     app.listen(Number(PORT), "0.0.0.0", () => {
         console.log(`🚀 Server running at port ${PORT}`);

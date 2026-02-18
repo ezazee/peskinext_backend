@@ -61,7 +61,8 @@ export const handleUploadSingle = (req: Request, res: Response) => {
     if (req.body.type === "article") folder = "articles";
     if (req.body.type === "user") folder = "users";
 
-    const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${folder}/${req.file.filename}`;
+    // Return relative path
+    const imageUrl = `/uploads/${folder}/${req.file.filename}`;
 
     res.json({ imageUrl });
 };
@@ -73,7 +74,8 @@ export const handleUploadMultiple = (req: Request, res: Response) => {
         return res.status(400).json({ error: "File tidak ditemukan" });
 
     const urls = files.map(file => {
-        return `${req.protocol}://${req.get("host")}/uploads/${req.body.type === "article" ? "articles" : "products"
+        // Return relative path
+        return `/uploads/${req.body.type === "article" ? "articles" : "products"
             }/${file.filename}`;
     });
 

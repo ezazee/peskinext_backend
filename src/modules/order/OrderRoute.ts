@@ -40,6 +40,18 @@ router.post("/orders", OrderController.createOrder);
 
 /**
  * @swagger
+ * /orders:
+ *   get:
+ *     summary: Get All Orders (Admin)
+ *     tags: [Order]
+ *     responses:
+ *       200:
+ *         description: List of all orders
+ */
+router.get("/orders", OrderController.getAllOrders);
+
+/**
+ * @swagger
  * /orders/{user_id}:
  *   get:
  *     summary: Get Orders by User ID
