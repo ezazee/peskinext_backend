@@ -34,19 +34,41 @@
   ],
   "paths": {
     "/categories": {
-      "post": {
-        "summary": "Create Article Category",
+      "get": {
+        "summary": "Ambil Semua Kategori Artikel",
+        "description": "Mengambil daftar semua kategori blog yang tersedia (misal: Skincare, Lifestyle, Promo).",
         "tags": [
-          "Article"
+          "Content & Support"
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar kategori berhasil diambil."
+          }
+        }
+      },
+      "post": {
+        "summary": "Buat Kategori Baru (Admin)",
+        "description": "Menambahkan kategori artikel blog baru ke dalam sistem.",
+        "tags": [
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
+                "required": [
+                  "name"
+                ],
                 "properties": {
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Tips Kecantikan"
                   }
                 }
               }
@@ -55,27 +77,22 @@
         },
         "responses": {
           "201": {
-            "description": "Category created"
-          }
-        }
-      },
-      "get": {
-        "summary": "Get All Article Categories",
-        "tags": [
-          "Article"
-        ],
-        "responses": {
-          "200": {
-            "description": "List of categories"
+            "description": "Kategori berhasil dibuat."
           }
         }
       }
     },
     "/categories/{id}": {
       "patch": {
-        "summary": "Update Article Category",
+        "summary": "Perbarui Kategori (Admin)",
+        "description": "Mengubah nama kategori artikel yang sudah ada.",
         "tags": [
-          "Article"
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -87,30 +104,22 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Category updated"
+            "description": "Kategori berhasil diperbarui."
           }
         }
       },
       "delete": {
-        "summary": "Delete Article Category",
+        "summary": "Hapus Kategori (Admin)",
+        "description": "Menghapus kategori artikel blog. Pastikan tidak ada artikel yang terhubung ke kategori ini sebelum menghapus.",
         "tags": [
-          "Article"
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -124,27 +133,34 @@
         ],
         "responses": {
           "200": {
-            "description": "Category deleted"
+            "description": "Kategori berhasil dihapus."
           }
         }
       }
     },
     "/posts": {
       "get": {
-        "summary": "Get All Posts",
+        "summary": "Ambil Semua Artikel (Blog)",
+        "description": "Mengambil daftar semua artikel blog yang sudah dipublikasikan di website.",
         "tags": [
-          "Article"
+          "Content & Support"
         ],
         "responses": {
           "200": {
-            "description": "List of posts"
+            "description": "Daftar artikel berhasil diambil."
           }
         }
       },
       "post": {
-        "summary": "Create New Post",
+        "summary": "Buat Artikel Baru (Admin)",
+        "description": "Administrator dapat mempublikasikan artikel blog baru.",
         "tags": [
-          "Article"
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "requestBody": {
           "content": {
@@ -160,7 +176,12 @@
                     "type": "string"
                   },
                   "content": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Isi artikel dalam format HTML atau string."
+                  },
+                  "image_url": {
+                    "type": "string",
+                    "description": "URL gambar utama artikel."
                   },
                   "category_id": {
                     "type": "integer"
@@ -175,16 +196,17 @@
         },
         "responses": {
           "201": {
-            "description": "Post created"
+            "description": "Artikel berhasil dibuat."
           }
         }
       }
     },
     "/posts/{id}": {
       "get": {
-        "summary": "Get Post by ID",
+        "summary": "Detail Artikel by ID",
+        "description": "Mengambil isi lengkap sebuah artikel berdasarkan ID uniknya.",
         "tags": [
-          "Article"
+          "Content & Support"
         ],
         "parameters": [
           {
@@ -198,14 +220,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Post details"
+            "description": "Data artikel berhasil ditemukan."
           }
         }
       },
       "patch": {
-        "summary": "Update Post",
+        "summary": "Perbarui Artikel (Admin)",
+        "description": "Mengubah isi atau judul artikel yang sudah ada.",
         "tags": [
-          "Article"
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -217,33 +245,22 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string"
-                  },
-                  "content": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Post updated"
+            "description": "Artikel berhasil diperbarui."
           }
         }
       },
       "delete": {
-        "summary": "Delete Post",
+        "summary": "Hapus Artikel (Admin)",
+        "description": "Menghapus artikel blog dari sistem.",
         "tags": [
-          "Article"
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -257,29 +274,55 @@
         ],
         "responses": {
           "200": {
-            "description": "Post deleted"
+            "description": "Artikel berhasil dihapus."
+          }
+        }
+      }
+    },
+    "/posts/slug/{slug}": {
+      "get": {
+        "summary": "Detail Artikel by Slug",
+        "description": "Mengambil isi lengkap sebuah artikel berdasarkan slug (URL-friendly name). Digunakan oleh website storefront.",
+        "tags": [
+          "Content & Support"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data artikel berhasil ditemukan."
           }
         }
       }
     },
     "/tags": {
       "get": {
-        "summary": "Get All Tags",
+        "summary": "Ambil Semua Tag Artikel",
+        "description": "Mengambil daftar semua label/tag yang digunakan untuk mengelompokkan artikel blog (misal: #skincare, #tips, #promo).",
         "tags": [
-          "Article"
+          "Content & Support"
         ],
         "responses": {
           "200": {
-            "description": "List of tags"
+            "description": "Daftar tag berhasil diambil."
           }
         }
       }
     },
     "/tags/{id}": {
       "get": {
-        "summary": "Get Tag by ID",
+        "summary": "Detail Tag by ID",
+        "description": "Mengambil informasi sebuah tag berdasarkan ID uniknya.",
         "tags": [
-          "Article"
+          "Content & Support"
         ],
         "parameters": [
           {
@@ -293,14 +336,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Tag details"
+            "description": "Data tag berhasil ditemukan."
           }
         }
       },
       "patch": {
-        "summary": "Update Tag",
+        "summary": "Perbarui Tag (Admin)",
+        "description": "Mengubah nama atau slug dari sebuah tag yang sudah ada.",
         "tags": [
-          "Article"
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -320,6 +369,9 @@
                 "properties": {
                   "name": {
                     "type": "string"
+                  },
+                  "slug": {
+                    "type": "string"
                   }
                 }
               }
@@ -328,14 +380,20 @@
         },
         "responses": {
           "200": {
-            "description": "Tag updated"
+            "description": "Tag berhasil diperbarui."
           }
         }
       },
       "delete": {
-        "summary": "Delete Tag",
+        "summary": "Hapus Tag (Admin)",
+        "description": "Menghapus label/tag dari sistem secara permanen.",
         "tags": [
-          "Article"
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -349,14 +407,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Tag deleted"
+            "description": "Tag berhasil dihapus."
           }
         }
       }
     },
     "/auth/admin/login": {
       "post": {
-        "summary": "Admin Login",
+        "summary": "Login Admin",
+        "description": "Digunakan oleh administrator untuk masuk ke Dashboard. Mengembalikan token akses (JWT).",
         "tags": [
           "Auth"
         ],
@@ -372,10 +431,12 @@
                 ],
                 "properties": {
                   "email": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "admin@peskinpro.id"
                   },
                   "password": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "password123"
                   }
                 }
               }
@@ -384,17 +445,18 @@
         },
         "responses": {
           "200": {
-            "description": "Login successful"
+            "description": "Login Berhasil. Mengembalikan data user dan token."
           },
           "401": {
-            "description": "Invalid credentials"
+            "description": "Email atau kata sandi salah."
           }
         }
       }
     },
     "/auth/user/login": {
       "post": {
-        "summary": "User Login",
+        "summary": "Login Pelanggan",
+        "description": "Digunakan oleh pembeli untuk masuk ke akun mereka di Storefront.",
         "tags": [
           "Auth"
         ],
@@ -410,10 +472,12 @@
                 ],
                 "properties": {
                   "email": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "customer@email.com"
                   },
                   "password": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "password123"
                   }
                 }
               }
@@ -422,16 +486,17 @@
         },
         "responses": {
           "200": {
-            "description": "Login successful"
+            "description": "Login Berhasil."
           }
         }
       }
     },
     "/register": {
       "post": {
-        "summary": "Register New User",
+        "summary": "Daftar Akun Baru",
+        "description": "Membuat akun pelanggan baru di sistem PESkinPro.",
         "tags": [
-          "User"
+          "Auth"
         ],
         "requestBody": {
           "required": true,
@@ -440,10 +505,10 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "name",
+                  "first_name",
+                  "last_name",
                   "email",
                   "password",
-                  "confPassword",
                   "phone"
                 ],
                 "properties": {
@@ -461,12 +526,6 @@
                   },
                   "phone": {
                     "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "confPassword": {
-                    "type": "string"
                   }
                 }
               }
@@ -475,59 +534,63 @@
         },
         "responses": {
           "201": {
-            "description": "Registration successful"
+            "description": "Pendaftaran berhasil."
           },
           "400": {
-            "description": "Validation error"
+            "description": "Data tidak valid atau email sudah terdaftar."
           }
         }
       }
     },
     "/token/refresh": {
       "post": {
-        "summary": "Refresh Access Token",
+        "summary": "Perbarui Token (Refresh Token)",
+        "description": "Memperbarui access token yang sudah kadaluarsa menggunakan refresh token yang tersimpan di cookie.",
         "tags": [
           "Auth"
         ],
         "responses": {
           "200": {
-            "description": "New access token generated"
+            "description": "Token baru berhasil dibuat."
           },
           "403": {
-            "description": "Invalid or expired refresh token"
+            "description": "Refresh token tidak valid atau sudah kadaluarsa."
           }
         }
       }
     },
     "/admin/logout": {
       "post": {
-        "summary": "Admin Logout",
+        "summary": "Keluar (Logout) Admin",
+        "description": "Menghapus sesi admin dan membersihkan cookie authentication.",
         "tags": [
           "Auth"
         ],
         "responses": {
           "200": {
-            "description": "Logout successful"
+            "description": "Logout berhasil."
           }
         }
       }
     },
     "/user/logout": {
       "post": {
-        "summary": "User Logout",
+        "summary": "Keluar (Logout) Pelanggan",
+        "description": "Menghapus sesi pelanggan dan membersihkan cookie authentication.",
         "tags": [
           "Auth"
         ],
         "responses": {
           "200": {
-            "description": "Logout successful"
+            "description": "Logout berhasil."
           }
         }
       }
     },
     "/admin/me": {
       "get": {
-        "summary": "Get Current Admin Profile",
+        "summary": "Ambil Profil Saya (Admin)",
+        "description": "Mengambil data profil administrator yang sedang login saat ini.",
         "tags": [
           "Auth"
         ],
@@ -538,48 +601,46 @@
         ],
         "responses": {
           "200": {
-            "description": "Admin profile data"
+            "description": "Data profil admin berhasil diambil."
           },
           "401": {
-            "description": "Unauthorized"
+            "description": "Sesi berakhir atau tidak memiliki ijin."
           }
         }
       }
     },
     "/auth/google": {
       "get": {
-        "summary": "Initiate Google OAuth Login",
+        "summary": "Login dengan Google",
+        "description": "Mengarahkan pengguna ke halaman login Google untuk otentikasi.",
         "tags": [
           "Auth"
         ],
-        "description": "Redirects user to Google Login page.",
         "responses": {
           "302": {
-            "description": "Redirects to Google"
+            "description": "Redirect ke Google."
           }
         }
       }
     },
     "/auth/google/callback": {
       "get": {
-        "summary": "Google OAuth Callback",
+        "summary": "Callback Google OAuth",
+        "description": "Menangani kembalian dari Google setelah pengguna login. Menghasilkan token dan mengarahkan kembali ke website.",
         "tags": [
           "Auth"
         ],
-        "description": "Handles the return from Google, generates tokens, and redirects to frontend.",
         "responses": {
           "302": {
-            "description": "Redirects to Frontend with token"
-          },
-          "401": {
-            "description": "Authentication failed"
+            "description": "Kembali ke website dengan membawa token."
           }
         }
       }
     },
     "/auth/forgot-password": {
       "post": {
-        "summary": "Request Forgot Password Email",
+        "summary": "Minta Reset Kata Sandi",
+        "description": "Mengirimkan email berisi link reset kata sandi ke alamat email pengguna.",
         "tags": [
           "Auth"
         ],
@@ -603,14 +664,15 @@
         },
         "responses": {
           "200": {
-            "description": "Email sent"
+            "description": "Email reset berhasil dikirim."
           }
         }
       }
     },
     "/auth/reset-password": {
       "post": {
-        "summary": "Reset Password with Token",
+        "summary": "Reset Kata Sandi Baru",
+        "description": "Mengubah kata sandi lama menjadi baru menggunakan token yang didapat dari email.",
         "tags": [
           "Auth"
         ],
@@ -638,20 +700,21 @@
         },
         "responses": {
           "200": {
-            "description": "Password reset successful"
+            "description": "Kata sandi berhasil diubah."
           }
         }
       }
     },
     "/banners": {
       "get": {
-        "summary": "Get All Banners",
+        "summary": "Ambil Semua Banner Storefront",
+        "description": "Mengambil daftar semua banner aktif yang dikelompokkan berdasarkan bagian (Main Hero, Carousel, dan Tiles).",
         "tags": [
-          "Banner"
+          "Content & Support"
         ],
         "responses": {
           "200": {
-            "description": "List of banners grouped by section (carousel/tiles)",
+            "description": "Daftar banner berhasil diambil.",
             "content": {
               "application/json": {
                 "schema": {
@@ -666,10 +729,12 @@
                             "type": "integer"
                           },
                           "src": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "URL Gambar Desktop"
                           },
                           "mobileSrc": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "URL Gambar Mobile"
                           },
                           "alt": {
                             "type": "string"
@@ -683,41 +748,13 @@
                     "carousel": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer"
-                          },
-                          "src": {
-                            "type": "string"
-                          },
-                          "alt": {
-                            "type": "string"
-                          },
-                          "redirect": {
-                            "type": "string"
-                          }
-                        }
+                        "type": "object"
                       }
                     },
                     "tiles": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer"
-                          },
-                          "src": {
-                            "type": "string"
-                          },
-                          "alt": {
-                            "type": "string"
-                          },
-                          "redirect": {
-                            "type": "string"
-                          }
-                        }
+                        "type": "object"
                       }
                     }
                   }
@@ -728,9 +765,15 @@
         }
       },
       "post": {
-        "summary": "Create New Banner",
+        "summary": "Buat Banner Baru (Admin)",
+        "description": "Administrator menambahkan gambar banner baru untuk promosi di halaman depan.",
         "tags": [
-          "Banner"
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "requestBody": {
           "required": true,
@@ -762,7 +805,8 @@
                     "type": "integer"
                   },
                   "redirect_url": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Link tujuan saat banner diklik."
                   },
                   "is_active": {
                     "type": "boolean"
@@ -774,16 +818,60 @@
         },
         "responses": {
           "201": {
-            "description": "Banner created"
+            "description": "Banner berhasil dibuat."
+          }
+        }
+      }
+    },
+    "/banners/{id}": {
+      "delete": {
+        "summary": "Hapus Banner (Admin)",
+        "description": "Menghapus banner tertentu dari website.",
+        "tags": [
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Banner berhasil dihapus."
+          }
+        }
+      }
+    },
+    "/banners/seed-popup": {
+      "get": {
+        "summary": "Inisialisasi Banner Popup (Testing)",
+        "description": "Menambahkan data banner popup percobaan ke dalam sistem.",
+        "tags": [
+          "Content & Support"
+        ],
+        "responses": {
+          "200": {
+            "description": "Data popup berhasil di-seed."
           }
         }
       }
     },
     "/cart": {
       "post": {
-        "summary": "Add Item to Cart",
+        "summary": "Tambah ke Keranjang",
+        "description": "Menambahkan produk dengan varian tertentu ke dalam keranjang belanja milik pelanggan.",
         "tags": [
-          "Cart"
+          "Order & Checkout"
         ],
         "requestBody": {
           "required": true,
@@ -798,16 +886,18 @@
                 ],
                 "properties": {
                   "user_id": {
-                    "type": "integer"
+                    "type": "string",
+                    "description": "UUID pengguna"
                   },
                   "product_id": {
-                    "type": "integer"
+                    "type": "string"
                   },
                   "variant_id": {
                     "type": "integer"
                   },
                   "quantity": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
                   }
                 }
               }
@@ -816,16 +906,17 @@
         },
         "responses": {
           "201": {
-            "description": "Item added to cart"
+            "description": "Berhasil ditambahkan ke keranjang."
           }
         }
       }
     },
     "/cart/{user_id}": {
       "get": {
-        "summary": "Get Cart by User ID",
+        "summary": "Lihat Keranjang",
+        "description": "Mengambil semua daftar belanjaan yang ada di dalam keranjang pengguna berdasarkan ID-nya.",
         "tags": [
-          "Cart"
+          "Order & Checkout"
         ],
         "parameters": [
           {
@@ -833,22 +924,23 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Cart details"
+            "description": "Data keranjang berhasil diambil."
           }
         }
       }
     },
     "/cart/{id}": {
       "patch": {
-        "summary": "Update Cart Item Quantity",
+        "summary": "Update Jumlah Item",
+        "description": "Mengubah jumlah (kuantitas) barang yang ada di dalam keranjang.",
         "tags": [
-          "Cart"
+          "Order & Checkout"
         ],
         "parameters": [
           {
@@ -857,7 +949,8 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "ID unik item di dalam keranjang."
           }
         ],
         "requestBody": {
@@ -876,14 +969,15 @@
         },
         "responses": {
           "200": {
-            "description": "Cart item updated"
+            "description": "Jumlah barang berhasil diperbarui."
           }
         }
       },
       "delete": {
-        "summary": "Remove Cart Item",
+        "summary": "Hapus dari Keranjang",
+        "description": "Mengeluarkan satu jenis barang dari keranjang belanja.",
         "tags": [
-          "Cart"
+          "Order & Checkout"
         ],
         "parameters": [
           {
@@ -897,20 +991,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Cart item removed"
+            "description": "Barang berhasil dihapus dari keranjang."
           }
         }
       }
     },
     "/vouchers": {
       "get": {
-        "summary": "Get All Active Coupons",
+        "summary": "Daftar Semua Voucher Aktif",
+        "description": "Mengambil semua kupon atau voucher yang tersedia dan masih bisa digunakan oleh pelanggan.",
         "tags": [
-          "Coupon"
+          "Order & Checkout"
         ],
         "responses": {
           "200": {
-            "description": "List of active coupons",
+            "description": "Daftar voucher berhasil diambil.",
             "content": {
               "application/json": {
                 "schema": {
@@ -920,7 +1015,7 @@
                     "properties": {
                       "id": {
                         "type": "string",
-                        "description": "Coupon Code"
+                        "description": "Kode Voucher"
                       },
                       "title": {
                         "type": "string"
@@ -949,13 +1044,143 @@
             }
           }
         }
+      },
+      "post": {
+        "summary": "Buat Voucher Baru (Admin)",
+        "description": "Administrator dapat membuat voucher promo atau ongkir baru.",
+        "tags": [
+          "Order & Checkout"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code",
+                  "title",
+                  "type"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "example": "PROMO50"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "shipping",
+                      "promo"
+                    ]
+                  },
+                  "discount_value": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Voucher berhasil dibuat."
+          }
+        }
+      }
+    },
+    "/vouchers/{id}": {
+      "get": {
+        "summary": "Detail Voucher by ID",
+        "description": "Mengambil informasi rinci sebuah voucher berdasarkan kode uniknya.",
+        "tags": [
+          "Order & Checkout"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data voucher ditemukan."
+          }
+        }
+      },
+      "patch": {
+        "summary": "Perbarui Voucher (Admin)",
+        "description": "Mengubah data voucher yang sudah ada.",
+        "tags": [
+          "Order & Checkout"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Voucher berhasil diperbarui."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Hapus Voucher (Admin)",
+        "description": "Menghapus voucher dari sistem.",
+        "tags": [
+          "Order & Checkout"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Voucher berhasil dihapus."
+          }
+        }
       }
     },
     "/vouchers/check": {
       "post": {
-        "summary": "Check Coupon Validity",
+        "summary": "Periksa Validitas Voucher",
+        "description": "Mengecek apakah sebuah kode voucher bisa digunakan untuk keranjang belanja saat ini. Menghitung jumlah potongan harga.",
         "tags": [
-          "Coupon"
+          "Order & Checkout"
         ],
         "requestBody": {
           "required": true,
@@ -970,10 +1195,12 @@
                 ],
                 "properties": {
                   "code": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "SKINCARENEW"
                   },
                   "total": {
-                    "type": "number"
+                    "type": "number",
+                    "description": "Total belanja awal"
                   },
                   "items": {
                     "type": "array",
@@ -988,34 +1215,373 @@
         },
         "responses": {
           "200": {
-            "description": "Coupon is valid",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "valid": {
-                      "type": "boolean"
-                    },
-                    "discount": {
-                      "type": "number"
+            "description": "Voucher valid. Mengembalikan nilai diskon."
+          },
+          "400": {
+            "description": "Voucher tidak valid (expired, kuota habis, atau syarat tidak terpenuhi)."
+          }
+        }
+      }
+    },
+    "/faqs": {
+      "get": {
+        "summary": "Ambil Semua FAQ (Publik)",
+        "description": "Mengambil daftar semua Pertanyaan yang Sering Diajukan (FAQ) yang berstatus 'published' untuk ditampilkan di Halaman Bantuan Storefront.",
+        "tags": [
+          "Content & Support"
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar FAQ berhasil diambil."
+          }
+        }
+      },
+      "post": {
+        "summary": "Buat FAQ Baru (Admin)",
+        "description": "Menambahkan Tanya Jawab baru ke dalam sistem Help Hub.",
+        "tags": [
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "question",
+                  "answer",
+                  "category"
+                ],
+                "properties": {
+                  "question": {
+                    "type": "string",
+                    "example": "Bagaimana cara melacak pesanan?"
+                  },
+                  "answer": {
+                    "type": "string",
+                    "example": "Anda bisa mengeceknya di halaman Profile > Pesanan."
+                  },
+                  "category": {
+                    "type": "string",
+                    "example": "Pengiriman"
+                  },
+                  "order": {
+                    "type": "number",
+                    "description": "Urutan tampilan"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "published",
+                      "draft"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "FAQ berhasil dibuat."
+          }
+        }
+      }
+    },
+    "/admin/faqs": {
+      "get": {
+        "summary": "Kelola Semua FAQ (Admin)",
+        "description": "Mengambil seluruh daftar FAQ termasuk yang masih berstatus draft (Khusus Admin).",
+        "tags": [
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar semua FAQ untuk manajemen konten."
+          }
+        }
+      }
+    },
+    "/faqs/{id}": {
+      "get": {
+        "summary": "Detail Satu FAQ",
+        "description": "Mengambil detail informasi (pertanyaan, jawaban, kategori) dari satu FAQ berdasarkan ID.",
+        "tags": [
+          "Content & Support"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data FAQ ditemukan."
+          }
+        }
+      },
+      "put": {
+        "summary": "Perbarui FAQ (Admin)",
+        "description": "Mengubah isi pertanyaan atau jawaban pada FAQ yang sudah ada.",
+        "tags": [
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "FAQ berhasil diperbarui."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Hapus FAQ (Admin)",
+        "description": "Menghapus FAQ dari sistem help hub.",
+        "tags": [
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "FAQ berhasil dihapus."
+          }
+        }
+      }
+    },
+    "/flash-sales/active": {
+      "get": {
+        "summary": "Ambil Flash Sale Aktif",
+        "description": "Mengambil data kampanye Flash Sale yang sedang berjalan saat ini beserta daftar produknya.",
+        "tags": [
+          "Product - Storefront"
+        ],
+        "responses": {
+          "200": {
+            "description": "Data Flash Sale aktif ditemukan."
+          }
+        }
+      }
+    },
+    "/flash-sales/admin/all": {
+      "get": {
+        "summary": "Daftar Semua Flash Sale (Admin)",
+        "description": "Mengambil seluruh riwayat kampanye Flash Sale (yang akan datang, aktif, maupun selesai).",
+        "tags": [
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar Flash Sale berhasil diambil."
+          }
+        }
+      }
+    },
+    "/flash-sales/admin/{id}": {
+      "get": {
+        "summary": "Detail Flash Sale (Admin)",
+        "description": "Melihat informasi rinci sebuah kampanye Flash Sale berdasarkan ID.",
+        "tags": [
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data detail Flash Sale ditemukan."
+          }
+        }
+      },
+      "put": {
+        "summary": "Perbarui Flash Sale (Admin)",
+        "description": "Mengatur ulang waktu atau produk pada kampanye Flash Sale yang sudah ada.",
+        "tags": [
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Flash Sale berhasil diperbarui."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Hapus Flash Sale (Admin)",
+        "description": "Membatalkan atau menghapus kampanye Flash Sale dari sistem.",
+        "tags": [
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Flash Sale berhasil dihapus."
+          }
+        }
+      }
+    },
+    "/flash-sales/admin": {
+      "post": {
+        "summary": "Buat Flash Sale Baru (Admin)",
+        "description": "Administrator membuat jadwal kampanye Flash Sale baru dengan menentukan waktu mulai/selesai serta produk & varian yang didiskon.",
+        "tags": [
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "start_time",
+                  "end_time",
+                  "items"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Promo Gajian"
+                  },
+                  "start_time": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "end_time": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "product_id": {
+                          "type": "string"
+                        },
+                        "variant_id": {
+                          "type": "integer"
+                        },
+                        "discount_price": {
+                          "type": "number"
+                        },
+                        "stock": {
+                          "type": "integer"
+                        }
+                      }
                     }
                   }
                 }
               }
             }
-          },
-          "400": {
-            "description": "Invalid coupon"
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Kampanye Flash Sale berhasil dibuat."
           }
         }
       }
     },
     "/invoices/{orderId}": {
       "get": {
-        "summary": "Get Invoice by Order ID",
+        "summary": "Ambil Data Invoice",
+        "description": "Mengambil detail informasi invoice (tagihan) berdasarkan ID Pesanan. Digunakan untuk menampilkan bukti tagihan kepada pelanggan.",
         "tags": [
-          "Invoice"
+          "Order & Checkout"
         ],
         "security": [
           {
@@ -1030,25 +1596,27 @@
             "schema": {
               "type": "string"
             },
-            "description": "Order UUID"
+            "description": "UUID Pesanan."
           }
         ],
         "responses": {
           "200": {
-            "description": "Invoice details",
+            "description": "Data invoice ditemukan.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "invoice_number": {
-                      "type": "string"
+                      "type": "string",
+                      "example": "INV-2024-001"
                     },
                     "total": {
                       "type": "number"
                     },
                     "status": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Status tagihan (unpaid, paid, expired)"
                     }
                   }
                 }
@@ -1058,11 +1626,117 @@
         }
       }
     },
+    "/notifications": {
+      "get": {
+        "summary": "Daftar Notifikasi Saya",
+        "description": "Mengambil semua pesan notifikasi masuk (tentang pesanan, promo, dll) untuk pengguna yang sedang login.",
+        "tags": [
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar notifikasi berhasil diambil."
+          }
+        }
+      }
+    },
+    "/notifications/unread": {
+      "get": {
+        "summary": "Jumlah Notifikasi Belum Dibaca",
+        "description": "Mengambil angka total notifikasi yang masih berstatus 'unread'. Digunakan untuk badge lonceng di UI.",
+        "tags": [
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mendapatkan jumlah pesan yang belum dibaca."
+          }
+        }
+      }
+    },
+    "/notifications/read-all": {
+      "put": {
+        "summary": "Baca Semua Notifikasi",
+        "description": "Mengubah status semua notifikasi milik pengguna menjadi 'read' (sudah dibaca).",
+        "tags": [
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Semua notifikasi berhasil ditandai sudah dibaca."
+          }
+        }
+      }
+    },
+    "/notifications/{id}/read": {
+      "put": {
+        "summary": "Tandai Satu Notifikasi Sudah Dibaca",
+        "description": "Mengubah status satu pesan notifikasi spesifik menjadi 'read'.",
+        "tags": [
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifikasi berhasil ditandai sudah dibaca."
+          }
+        }
+      }
+    },
+    "/notifications/seed-test": {
+      "post": {
+        "summary": "Buat Notifikasi Percobaan (Testing)",
+        "description": "Mengisi data notifikasi palsu untuk keperluan pengujian tampilan di frontend.",
+        "tags": [
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Data percobaan berhasil dibuat."
+          }
+        }
+      }
+    },
     "/orders": {
       "post": {
-        "summary": "Create New Order",
+        "summary": "Buat Pesanan Baru (Checkout)",
+        "description": "Mengubah isi keranjang menjadi pesanan resmi. Menghitung total biaya termasuk ongkir dan diskon.",
         "tags": [
-          "Order"
+          "Order & Checkout"
         ],
         "requestBody": {
           "required": true,
@@ -1073,20 +1747,28 @@
                 "required": [
                   "user_id",
                   "courier",
-                  "shipping_cost"
+                  "shipping_cost",
+                  "shipping_service"
                 ],
                 "properties": {
                   "user_id": {
                     "type": "string"
                   },
                   "courier": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "jne"
+                  },
+                  "shipping_service": {
+                    "type": "string",
+                    "example": "REG"
                   },
                   "shipping_cost": {
-                    "type": "number"
+                    "type": "number",
+                    "example": 15000
                   },
                   "coupon_id": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Opsional jika pakai voucher"
                   }
                 }
               }
@@ -1095,16 +1777,29 @@
         },
         "responses": {
           "201": {
-            "description": "Order created"
+            "description": "Pesanan berhasil dibuat."
+          }
+        }
+      },
+      "get": {
+        "summary": "Ambil Semua Pesanan (Admin)",
+        "description": "Melihat seluruh daftar pesanan dari semua pelanggan (Khusus Admin).",
+        "tags": [
+          "Order & Checkout"
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar pesanan berhasil diambil."
           }
         }
       }
     },
     "/orders/{user_id}": {
       "get": {
-        "summary": "Get Orders by User ID",
+        "summary": "Riwayat Pesanan Saya (Pelanggan)",
+        "description": "Mengambil daftar pesanan milik pelanggan tertentu berdasarkan ID-nya.",
         "tags": [
-          "Order"
+          "Order & Checkout"
         ],
         "parameters": [
           {
@@ -1118,16 +1813,17 @@
         ],
         "responses": {
           "200": {
-            "description": "List of orders"
+            "description": "Daftar riwayat pesanan ditemukan."
           }
         }
       }
     },
     "/orders/{id}": {
       "put": {
-        "summary": "Update Order",
+        "summary": "Perbarui Data Pesanan (Admin)",
+        "description": "Mengubah informasi pada pesanan yang sudah ada (misal: ganti alamat, kurir, atau penyesuaian nominal).",
         "tags": [
-          "Order"
+          "Order & Checkout"
         ],
         "parameters": [
           {
@@ -1139,44 +1835,19 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "address_id": {
-                    "type": "string"
-                  },
-                  "courier": {
-                    "type": "string"
-                  },
-                  "shipping_service": {
-                    "type": "string"
-                  },
-                  "shipping_cost": {
-                    "type": "number"
-                  },
-                  "total_amount": {
-                    "type": "number"
-                  }
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Order updated"
+            "description": "Pesanan berhasil diperbarui."
           }
         }
       }
     },
     "/orders/{id}/status": {
       "patch": {
-        "summary": "Update Order Status",
+        "summary": "Update Status Pesanan (Admin/Sistem)",
+        "description": "Mengubah status pesanan (misal: dari 'Pending' ke 'Processing').",
         "tags": [
-          "Order"
+          "Order & Checkout"
         ],
         "parameters": [
           {
@@ -1195,10 +1866,12 @@
                 "type": "object",
                 "properties": {
                   "status": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "processing"
                   },
                   "note": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Catatan tambahan"
                   }
                 }
               }
@@ -1207,16 +1880,17 @@
         },
         "responses": {
           "200": {
-            "description": "Order status updated"
+            "description": "Status pesanan berhasil diupdate."
           }
         }
       }
     },
     "/orders/detail/{id}": {
       "get": {
-        "summary": "Get Order Details (with Auto-Cancel)",
+        "summary": "Lihat Detail Pesanan Lengkap",
+        "description": "Mengambil informasi sangat rinci tentang satu pesanan, termasuk item yang dibeli, status pembayaran, dan data pengiriman.",
         "tags": [
-          "Order"
+          "Order & Checkout"
         ],
         "parameters": [
           {
@@ -1230,16 +1904,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Order details"
+            "description": "Detail pesanan ditemukan."
           }
         }
       }
     },
     "/orders/{id}/ship": {
       "put": {
-        "summary": "Update Order to Shipped (Input Resi)",
+        "summary": "Input Resi Pengiriman (Admin)",
+        "description": "Memasukkan nomor resi kurir dan mengubah status pesanan menjadi 'Shipped' (Dikirim).",
         "tags": [
-          "Order"
+          "Order & Checkout"
         ],
         "parameters": [
           {
@@ -1262,7 +1937,8 @@
                 ],
                 "properties": {
                   "tracking_number": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "JNE123456789"
                   }
                 }
               }
@@ -1271,16 +1947,17 @@
         },
         "responses": {
           "200": {
-            "description": "Order shipped"
+            "description": "Nomor resi berhasil disimpan."
           }
         }
       }
     },
     "/orders/{id}/complete": {
       "put": {
-        "summary": "Complete Order (Pesanan Diterima)",
+        "summary": "Konfirmasi Pesanan Selesai",
+        "description": "Menandakan bahwa barang sudah diterima oleh pelanggan. Status berubah menjadi 'Completed'.",
         "tags": [
-          "Order"
+          "Order & Checkout"
         ],
         "parameters": [
           {
@@ -1294,16 +1971,103 @@
         ],
         "responses": {
           "200": {
-            "description": "Order delivered"
+            "description": "Pesanan dinyatakan selesai."
+          }
+        }
+      }
+    },
+    "/payment/create": {
+      "post": {
+        "summary": "Buat Sesi Pembayaran (Midtrans/DOKU)",
+        "description": "Mengirimkan data pesanan ke Payment Gateway untuk mendapatkan link atau token pembayaran.",
+        "tags": [
+          "Order & Checkout"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "order_id"
+                ],
+                "properties": {
+                  "order_id": {
+                    "type": "string",
+                    "description": "UUID Pesanan"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sesi pembayaran berhasil dibuat.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "payment_url": {
+                      "type": "string",
+                      "description": "Link menuju halaman pembayaran gateway."
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "Token pembayaran (jika menggunakan Snap/Popup)."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payment/notification": {
+      "post": {
+        "summary": "Webhook Notifikasi Pembayaran",
+        "description": "Endpoint otomatis yang menerima update status real-time dari Payment Gateway saat pelanggan berhasil membayar atau pembayaran expired.",
+        "tags": [
+          "Order & Checkout"
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifikasi berhasil diproses."
           }
         }
       }
     },
     "/products": {
-      "post": {
-        "summary": "Create New Product",
+      "get": {
+        "summary": "Ambil Semua Produk",
+        "description": "Mengambil daftar semua produk yang aktif untuk ditampilkan di website depan.",
         "tags": [
-          "Product"
+          "Product - Storefront"
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar produk berhasil diambil."
+          }
+        }
+      },
+      "post": {
+        "summary": "Buat Produk Baru",
+        "description": "Menambahkan produk baru ke dalam katalog (Khusus Admin).",
+        "tags": [
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "requestBody": {
           "required": true,
@@ -1329,6 +2093,9 @@
                   },
                   "weight": {
                     "type": "number"
+                  },
+                  "description": {
+                    "type": "string"
                   }
                 }
               }
@@ -1337,27 +2104,17 @@
         },
         "responses": {
           "201": {
-            "description": "Product created"
-          }
-        }
-      },
-      "get": {
-        "summary": "Get All Products",
-        "tags": [
-          "Product"
-        ],
-        "responses": {
-          "200": {
-            "description": "List of products"
+            "description": "Produk berhasil dibuat."
           }
         }
       }
     },
     "/products/{productId}": {
       "get": {
-        "summary": "Get Product Detail",
+        "summary": "Detail Produk",
+        "description": "Mengambil informasi lengkap sebuah produk berdasarkan ID atau Slug.",
         "tags": [
-          "Product"
+          "Product - Storefront"
         ],
         "parameters": [
           {
@@ -1371,14 +2128,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Product detail"
+            "description": "Data produk ditemukan."
           }
         }
       },
       "delete": {
-        "summary": "Delete Product",
+        "summary": "Hapus Produk",
+        "description": "Menghapus produk dari database secara permanen.",
         "tags": [
-          "Product"
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -1392,16 +2155,62 @@
         ],
         "responses": {
           "200": {
-            "description": "Product deleted"
+            "description": "Produk berhasil dihapus."
+          }
+        }
+      }
+    },
+    "/products/calculate": {
+      "post": {
+        "summary": "Hitung Harga Produk",
+        "description": "Menghitung harga total berdasarkan varian yang dipilih dan jumlah (qty). Digunakan sebelum masuk ke checkout.",
+        "tags": [
+          "Product - Storefront"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "productId",
+                  "variantId",
+                  "qty"
+                ],
+                "properties": {
+                  "productId": {
+                    "type": "string"
+                  },
+                  "variantId": {
+                    "type": "integer"
+                  },
+                  "qty": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Hasil perhitungan harga."
           }
         }
       }
     },
     "/products/{id}": {
       "patch": {
-        "summary": "Update Product",
+        "summary": "Update Data Produk",
+        "description": "Mengubah informasi produk yang sudah ada.",
         "tags": [
-          "Product"
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -1413,35 +2222,24 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "price": {
-                    "type": "number"
-                  }
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Product updated"
+            "description": "Data produk berhasil diupdate."
           }
         }
       }
     },
     "/stock": {
       "post": {
-        "summary": "Add Stock",
+        "summary": "Tambah Stok (Admin)",
+        "description": "Menambah jumlah stok untuk varian produk tertentu.",
         "tags": [
-          "Product"
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "requestBody": {
           "content": {
@@ -1462,16 +2260,22 @@
         },
         "responses": {
           "201": {
-            "description": "Stock added"
+            "description": "Stok berhasil ditambahkan."
           }
         }
       }
     },
     "/stock/{productId}": {
       "get": {
-        "summary": "Get Product Stock",
+        "summary": "Lihat Stok Produk (Admin)",
+        "description": "Melihat riwayat atau sisa stok dari suatu produk.",
         "tags": [
-          "Product"
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -1485,16 +2289,22 @@
         ],
         "responses": {
           "200": {
-            "description": "Stock details"
+            "description": "Data stok berhasil diambil."
           }
         }
       }
     },
     "/stock/{id}": {
       "patch": {
-        "summary": "Update Stock",
+        "summary": "Edit Catatan Stok (Admin)",
+        "description": "Mengubah data histori stok yang sudah tercatat.",
         "tags": [
-          "Product"
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -1506,32 +2316,24 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "quantity": {
-                    "type": "integer"
-                  }
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Stock updated"
+            "description": "Stok berhasil diupdate."
           }
         }
       }
     },
     "/stock/{variantId}/{stockId}": {
       "delete": {
-        "summary": "Delete Stock",
+        "summary": "Hapus Riwayat Stok (Admin)",
+        "description": "Menghapus salah satu catatan perubahan stok.",
         "tags": [
-          "Product"
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -1553,16 +2355,36 @@
         ],
         "responses": {
           "200": {
-            "description": "Stock deleted"
+            "description": "Catatan stok berhasil dihapus."
+          }
+        }
+      }
+    },
+    "/products/transfer": {
+      "post": {
+        "summary": "Transfer Stok (Admin)",
+        "description": "Memindahkan stok dari satu varian ke varian lain.",
+        "tags": [
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transfer stok berhasil."
           }
         }
       }
     },
     "/variant/{variantId}": {
       "get": {
-        "summary": "Get Variant Detail",
+        "summary": "Ambil Detail Varian (Admin)",
+        "description": "Melihat informasi rinci sebuah varian produk (misal: ukuran, warna, harga spesifik).",
         "tags": [
-          "Product"
+          "Product - Admin"
         ],
         "parameters": [
           {
@@ -1576,14 +2398,20 @@
         ],
         "responses": {
           "200": {
-            "description": "Variant detail"
+            "description": "Data varian berhasil ditemukan."
           }
         }
       },
       "patch": {
-        "summary": "Update Variant",
+        "summary": "Perbarui Varian (Admin)",
+        "description": "Mengubah informasi nama atau data lain pada varian.",
         "tags": [
-          "Product"
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -1595,32 +2423,24 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "variant_name": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Variant updated"
+            "description": "Varian berhasil diupdate."
           }
         }
       }
     },
     "/variant": {
       "post": {
-        "summary": "Add Variant",
+        "summary": "Tambah Varian Produk (Admin)",
+        "description": "Membuat varian baru untuk suatu produk (misal: Saku 50ml, Saku 100ml).",
         "tags": [
-          "Product"
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "requestBody": {
           "content": {
@@ -1644,16 +2464,22 @@
         },
         "responses": {
           "201": {
-            "description": "Variant added"
+            "description": "Varian berhasil ditambahkan."
           }
         }
       }
     },
     "/variant/{productId}/{variantId}": {
       "delete": {
-        "summary": "Delete Variant",
+        "summary": "Hapus Varian (Admin)",
+        "description": "Menghapus varian dari produk tertentu.",
         "tags": [
-          "Product"
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -1675,16 +2501,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Variant deleted"
+            "description": "Varian berhasil dihapus."
           }
         }
       }
     },
     "/reviews": {
       "get": {
-        "summary": "Get Reviews by Product",
+        "summary": "Ambil Ulasan Produk (Storefront)",
+        "description": "Mengambil daftar ulasan dan penilaian (rating) berdasarkan slug produk.",
         "tags": [
-          "Review"
+          "Product - Storefront"
         ],
         "parameters": [
           {
@@ -1694,12 +2521,12 @@
               "type": "string"
             },
             "required": true,
-            "description": "Product Slug"
+            "description": "Slug/URL produk (misal: 'serum-anti-aging')"
           }
         ],
         "responses": {
           "200": {
-            "description": "List of reviews",
+            "description": "Daftar ulasan berhasil diambil.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1711,13 +2538,15 @@
                         "type": "integer"
                       },
                       "user": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Nama reviewer"
                       },
                       "variant": {
                         "type": "string"
                       },
                       "rating": {
-                        "type": "number"
+                        "type": "number",
+                        "example": 5
                       },
                       "comment": {
                         "type": "string"
@@ -1726,11 +2555,12 @@
                         "type": "array",
                         "items": {
                           "type": "string"
-                        }
+                        },
+                        "description": "Array URL gambar lampiran"
                       },
                       "date": {
                         "type": "string",
-                        "format": "date"
+                        "format": "date-time"
                       }
                     }
                   }
@@ -1741,9 +2571,10 @@
         }
       },
       "post": {
-        "summary": "Create New Review",
+        "summary": "Beri Ulasan Baru (Pelanggan)",
+        "description": "Menambahkan ulasan dan rating untuk produk yang sudah dibeli oleh pelanggan.",
         "tags": [
-          "Review"
+          "Product - Storefront"
         ],
         "security": [
           {
@@ -1766,12 +2597,14 @@
                     "type": "string"
                   },
                   "variantName": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Opsional jika produk memiliki varian"
                   },
                   "rating": {
                     "type": "number",
                     "minimum": 1,
-                    "maximum": 5
+                    "maximum": 5,
+                    "example": 5
                   },
                   "comment": {
                     "type": "string"
@@ -1789,16 +2622,152 @@
         },
         "responses": {
           "201": {
-            "description": "Review created"
+            "description": "Ulasan berhasil dibuat."
+          }
+        }
+      }
+    },
+    "/admin/reviews": {
+      "get": {
+        "summary": "Daftar Semua Ulasan (Admin)",
+        "description": "Mengambil seluruh ulasan dari semua produk untuk keperluan moderasi.",
+        "tags": [
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar seluruh ulasan pelanggan."
+          }
+        }
+      },
+      "post": {
+        "summary": "Buat Ulasan Manual (Admin)",
+        "description": "Administrator dapat memasukkan ulasan secara manual ke dalam sistem (misal: import dari marketplace lain).",
+        "tags": [
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Ulasan berhasil ditambahkan."
+          }
+        }
+      }
+    },
+    "/reviews/{id}": {
+      "delete": {
+        "summary": "Hapus Ulasan (Admin)",
+        "description": "Menghapus ulasan yang melanggar aturan atau spam.",
+        "tags": [
+          "Product - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ulasan berhasil dihapus."
+          }
+        }
+      }
+    },
+    "/settings": {
+      "get": {
+        "summary": "Ambil Pengaturan Umum",
+        "description": "Mengambil data konfigurasi website seperti Nama Brand, Logo, Alamat Toko, Email Support, dan Nomor WhatsApp.",
+        "tags": [
+          "Content & Support"
+        ],
+        "responses": {
+          "200": {
+            "description": "Pengaturan berhasil diambil."
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Pengaturan (Admin)",
+        "description": "Mengubah konfigurasi sistem atau informasi brand (Khusus Admin).",
+        "tags": [
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "brand_name": {
+                    "type": "string"
+                  },
+                  "contact_email": {
+                    "type": "string"
+                  },
+                  "whatsapp_number": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pengaturan berhasil diperbarui."
+          }
+        }
+      }
+    },
+    "/settings/seed": {
+      "post": {
+        "summary": "Reset Pengaturan ke Default (Admin)",
+        "description": "Menghapus pengaturan saat ini dan mengembalikannya ke nilai awal (seed) pabrikan.",
+        "tags": [
+          "Content & Support"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pengaturan berhasil di-reset."
           }
         }
       }
     },
     "/shipping/check-ongkir": {
       "post": {
-        "summary": "Check Shipping Cost (RajaOngkir)",
+        "summary": "Cek Biaya Ongkir",
+        "description": "Menghitung estimasi biaya pengiriman dari gudang ke alamat pelanggan menggunakan RajaOngkir.",
         "tags": [
-          "Shipping"
+          "Order & Checkout"
         ],
         "requestBody": {
           "content": {
@@ -1810,7 +2779,8 @@
                 ],
                 "properties": {
                   "user_id": {
-                    "type": "integer"
+                    "type": "string",
+                    "description": "ID Pelanggan (UUID)"
                   }
                 }
               }
@@ -1819,18 +2789,18 @@
         },
         "responses": {
           "200": {
-            "description": "Shipping cost details"
+            "description": "Detail biaya ongkir dari berbagai kurir (JNE, POS, TIKI)."
           }
         }
       }
     },
     "/shipping/webhook": {
       "post": {
-        "summary": "Handle Biteship Webhooks",
+        "summary": "Webhook Biteship",
+        "description": "Endpoint otomatis untuk menerima update status pengiriman real-time dari Biteship (Sistem-ke-Sistem).",
         "tags": [
-          "Shipping"
+          "Order & Checkout"
         ],
-        "description": "Endpoint to receive order status updates from Biteship.",
         "parameters": [
           {
             "in": "header",
@@ -1838,38 +2808,22 @@
             "schema": {
               "type": "string"
             },
-            "description": "Signature for verification"
+            "description": "Tanda tangan keamanan untuk verifikasi data."
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "event": {
-                    "type": "string"
-                  },
-                  "payload": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Webhook received successfully"
+            "description": "Webhook diterima."
           }
         }
       }
     },
     "/shipping/order/{id}": {
       "post": {
-        "summary": "Request Pickup (Create Biteship Order)",
+        "summary": "Request Pickup (Admin)",
+        "description": "Memesan kurir penjemputan barang (Biteship) untuk pesanan tertentu.",
         "tags": [
-          "Shipping"
+          "Order & Checkout"
         ],
         "parameters": [
           {
@@ -1879,21 +2833,22 @@
             "schema": {
               "type": "string"
             },
-            "description": "Order ID"
+            "description": "ID Pesanan."
           }
         ],
         "responses": {
           "200": {
-            "description": "Order created successfully"
+            "description": "Order pengiriman berhasil dibuat."
           }
         }
       }
     },
     "/shipping/tracking/{id}": {
       "get": {
-        "summary": "Get Order Tracking",
+        "summary": "Lacak Pengiriman",
+        "description": "Mengambil status perjalanan paket secara real-time berdasarkan ID Pesanan.",
         "tags": [
-          "Shipping"
+          "Order & Checkout"
         ],
         "parameters": [
           {
@@ -1902,22 +2857,22 @@
             "required": true,
             "schema": {
               "type": "string"
-            },
-            "description": "Order ID"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Tracking details"
+            "description": "Detail status pelacakan paket."
           }
         }
       }
     },
     "/transactions/callback": {
       "post": {
-        "summary": "Handle Payment Callback (DOKU)",
+        "summary": "Callback Status Pembayaran (Sistem)",
+        "description": "Endpoint otomatis yang dipanggil oleh Payment Gateway (DOKU/Midtrans) untuk memberitahu sistem bahwa pembayaran pelanggan sudah lunas atau kadaluarsa.",
         "tags": [
-          "Transaction"
+          "Order & Checkout"
         ],
         "requestBody": {
           "required": true,
@@ -1938,7 +2893,8 @@
                     "type": "object",
                     "properties": {
                       "status": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Status pembayaran (SUCCESS, FAILED, EXPIRED)"
                       }
                     }
                   }
@@ -1949,16 +2905,17 @@
         },
         "responses": {
           "200": {
-            "description": "Callback processed"
+            "description": "Data callback berhasil diproses oleh sistem."
           }
         }
       }
     },
     "/transactions/{orderId}": {
       "get": {
-        "summary": "Get Transaction by Order ID",
+        "summary": "Cek Status Transaksi",
+        "description": "Mengambil detail informasi transaksi pembayaran berdasarkan ID Pesanan.",
         "tags": [
-          "Transaction"
+          "Order & Checkout"
         ],
         "security": [
           {
@@ -1973,38 +2930,48 @@
             "schema": {
               "type": "string"
             },
-            "description": "Order UUID"
+            "description": "UUID Pesanan."
           }
         ],
         "responses": {
           "200": {
-            "description": "Transaction details"
+            "description": "Detail transaksi ditemukan."
           }
         }
       }
     },
     "/upload/single": {
       "post": {
-        "summary": "Upload Single File",
+        "summary": "Upload Satu File",
+        "description": "Mengunggah satu file gambar atau video ke storage server (misal: untuk foto profil atau thumbnail artikel).",
         "tags": [
-          "Upload"
+          "System & Media"
         ],
         "requestBody": {
           "content": {
             "multipart/form-data": {
               "schema": {
                 "type": "object",
+                "required": [
+                  "file",
+                  "type"
+                ],
                 "properties": {
                   "file": {
                     "type": "string",
-                    "format": "binary"
+                    "format": "binary",
+                    "description": "File yang akan diupload (Max: Tergantung tipe. Image biasa 2-5MB, Video review max 50MB)."
                   },
                   "type": {
                     "type": "string",
                     "enum": [
                       "article",
-                      "product"
-                    ]
+                      "product",
+                      "user",
+                      "branding",
+                      "review"
+                    ],
+                    "description": "Tempat atau folder tujuan file disimpan."
                   }
                 }
               }
@@ -2013,36 +2980,66 @@
         },
         "responses": {
           "200": {
-            "description": "File uploaded"
+            "description": "File berhasil diupload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "file_url": {
+                      "type": "string",
+                      "description": "URL publik untuk mengakses file tersebut."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
     },
     "/upload/multiple": {
       "post": {
-        "summary": "Upload Multiple Files",
+        "summary": "Upload Banyak File",
+        "description": "Mengunggah beberapa file gambar atau video sekaligus (misal: untuk galeri produk atau lampiran review barang).",
         "tags": [
-          "Upload"
+          "System & Media"
         ],
         "requestBody": {
           "content": {
             "multipart/form-data": {
               "schema": {
                 "type": "object",
+                "required": [
+                  "files",
+                  "type"
+                ],
                 "properties": {
                   "files": {
                     "type": "array",
                     "items": {
                       "type": "string",
                       "format": "binary"
-                    }
+                    },
+                    "description": "Daftar file yang akan diupload."
                   },
                   "type": {
                     "type": "string",
                     "enum": [
                       "article",
-                      "product"
-                    ]
+                      "product",
+                      "user",
+                      "branding",
+                      "review"
+                    ],
+                    "description": "Tempat atau folder tujuan file disimpan."
                   }
                 }
               }
@@ -2051,16 +3048,40 @@
         },
         "responses": {
           "200": {
-            "description": "Files uploaded"
+            "description": "File berhasil diupload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "file_urls": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Daftar URL publik dari file yang berhasil diupload."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
     },
-    "/addres": {
+    "/address": {
       "post": {
-        "summary": "Create New Address",
+        "summary": "Tambah Alamat Baru",
+        "description": "Menyimpan alamat pengiriman baru untuk pelanggan.",
         "tags": [
-          "Address"
+          "User - Customer"
         ],
         "requestBody": {
           "required": true,
@@ -2068,18 +3089,41 @@
             "application/json": {
               "schema": {
                 "type": "object",
+                "required": [
+                  "recipient_name",
+                  "phone_number",
+                  "address_line",
+                  "province_id",
+                  "city_id",
+                  "district_id"
+                ],
                 "properties": {
-                  "user_id": {
-                    "type": "integer"
-                  },
                   "recipient_name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Budi Santoso"
                   },
                   "phone_number": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "08123456789"
                   },
                   "address_line": {
+                    "type": "string",
+                    "description": "Detail alamat (Jalan, No Rumah)."
+                  },
+                  "province_id": {
+                    "type": "integer"
+                  },
+                  "city_id": {
+                    "type": "integer"
+                  },
+                  "district_id": {
+                    "type": "integer"
+                  },
+                  "postal_code": {
                     "type": "string"
+                  },
+                  "is_default": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -2088,16 +3132,17 @@
         },
         "responses": {
           "201": {
-            "description": "Address created"
+            "description": "Alamat berhasil ditambahkan."
           }
         }
       }
     },
-    "/addres/{user_id}": {
+    "/addresses/{user_id}": {
       "get": {
-        "summary": "Get Addresses by User ID",
+        "summary": "Daftar Alamat Pelanggan",
+        "description": "Mengambil semua daftar alamat yang dimiliki oleh seorang pengguna berdasarkan ID-nya.",
         "tags": [
-          "Address"
+          "User - Customer"
         ],
         "parameters": [
           {
@@ -2105,22 +3150,24 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "type": "integer"
-            }
+              "type": "string"
+            },
+            "description": "UUID pengguna."
           }
         ],
         "responses": {
           "200": {
-            "description": "List of addresses"
+            "description": "Daftar alamat berhasil ditemukan."
           }
         }
       }
     },
-    "/addres/{id}": {
-      "patch": {
-        "summary": "Update Address",
+    "/address/{id}": {
+      "put": {
+        "summary": "Perbarui Alamat",
+        "description": "Mengubah detail informasi pada alamat yang sudah ada.",
         "tags": [
-          "Address"
+          "User - Customer"
         ],
         "parameters": [
           {
@@ -2129,7 +3176,8 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "ID unik alamat."
           }
         ],
         "requestBody": {
@@ -2141,65 +3189,19 @@
                   "recipient_name": {
                     "type": "string"
                   },
+                  "phone_number": {
+                    "type": "string"
+                  },
                   "address_line": {
                     "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Address updated"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete Address",
-        "tags": [
-          "Address"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Address deleted"
-          }
-        }
-      }
-    },
-    "/addres/{id}/set-default": {
-      "patch": {
-        "summary": "Set Address as Default",
-        "tags": [
-          "Address"
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "user_id": {
+                  },
+                  "province_id": {
+                    "type": "integer"
+                  },
+                  "city_id": {
+                    "type": "integer"
+                  },
+                  "district_id": {
                     "type": "integer"
                   }
                 }
@@ -2209,16 +3211,63 @@
         },
         "responses": {
           "200": {
-            "description": "Address set as default"
+            "description": "Alamat berhasil diperbarui."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Hapus Alamat",
+        "description": "Menghapus alamat pengiriman dari daftar pelanggan.",
+        "tags": [
+          "User - Customer"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alamat berhasil dihapus."
+          }
+        }
+      }
+    },
+    "/address/{id}/default": {
+      "put": {
+        "summary": "Setel Alamat Utama",
+        "description": "Menjadikan salah satu alamat sebagai alamat pengiriman utama (default).",
+        "tags": [
+          "User - Customer"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alamat berhasil disetel sebagai utama."
           }
         }
       }
     },
     "/users": {
       "get": {
-        "summary": "Get All Users",
+        "summary": "Ambil Semua Pengguna (Admin)",
+        "description": "Mengambil daftar semua pengguna di sistem, termasuk admin dan pelanggan.",
         "tags": [
-          "User"
+          "User - Admin"
         ],
         "security": [
           {
@@ -2227,19 +3276,127 @@
         ],
         "responses": {
           "200": {
-            "description": "List of users"
+            "description": "Daftar pengguna berhasil diambil."
           },
           "403": {
-            "description": "Admin access required"
+            "description": "Hanya Admin yang bisa mengakses ini."
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "summary": "Ambil Detail Pengguna (Admin)",
+        "description": "Melihat informasi rinci seorang pengguna berdasarkan ID (UUID).",
+        "tags": [
+          "User - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID Pengguna (UUID)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data detail pengguna ditemukan."
+          },
+          "404": {
+            "description": "Pengguna tidak ditemukan."
+          }
+        }
+      },
+      "put": {
+        "summary": "Edit Data Pengguna (Admin)",
+        "description": "Administrator dapat mengubah data pengguna apapun berdasarkan ID.",
+        "tags": [
+          "User - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data pengguna berhasil diupdate."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Hapus Pengguna (Admin)",
+        "description": "Menghapus akun pengguna dari sistem secara permanen.",
+        "tags": [
+          "User - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pengguna berhasil dihapus."
           }
         }
       }
     },
     "/user/me": {
-      "put": {
-        "summary": "Update Current User Profile",
+      "get": {
+        "summary": "Lihat Profil Saya (Pelanggan)",
+        "description": "Mengambil data profil milik pengguna yang sedang login.",
         "tags": [
-          "User"
+          "User - Customer"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Data profil berhasil diambil."
+          },
+          "401": {
+            "description": "Token tidak valid atau sesi berakhir."
+          }
+        }
+      },
+      "put": {
+        "summary": "Perbarui Profil Saya (Pelanggan)",
+        "description": "Mengubah informasi profil seperti nama, email, hp, dan foto profil sendiri.",
+        "tags": [
+          "User - Customer"
         ],
         "security": [
           {
@@ -2263,10 +3420,12 @@
                   },
                   "birthDate": {
                     "type": "string",
-                    "format": "date"
+                    "format": "date",
+                    "example": "1995-12-30"
                   },
                   "avatarUrl": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "URL foto profil yang baru."
                   }
                 }
               }
@@ -2275,38 +3434,20 @@
         },
         "responses": {
           "200": {
-            "description": "Profile updated"
+            "description": "Profil berhasil diperbarui."
           },
           "401": {
-            "description": "Unauthorized"
-          }
-        }
-      },
-      "get": {
-        "summary": "Get Current User Profile",
-        "tags": [
-          "User"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User profile data"
-          },
-          "401": {
-            "description": "Unauthorized"
+            "description": "Tidak diijinkan (Harus login)."
           }
         }
       }
     },
     "/user/create": {
       "post": {
-        "summary": "Create User (Admin)",
+        "summary": "Buat Pengguna Baru (Admin)",
+        "description": "Administrator dapat membuat akun baru secara manual dan menentukan role-nya.",
         "tags": [
-          "User"
+          "User - Admin"
         ],
         "security": [
           {
@@ -2340,7 +3481,8 @@
                     "type": "string"
                   },
                   "role": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Contoh 'admin' atau 'customer'"
                   }
                 }
               }
@@ -2349,19 +3491,53 @@
         },
         "responses": {
           "201": {
-            "description": "User created successfully"
-          },
-          "403": {
-            "description": "Admin access required"
+            "description": "Pengguna baru berhasil dibuat."
           }
         }
       }
     },
-    "/users/{id}": {
-      "delete": {
-        "summary": "Delete User",
+    "/role-permissions": {
+      "get": {
+        "summary": "Ambil Semua Ijin Role (Admin)",
+        "description": "Melihat daftar semua role dan ijin akses (permissions) yang ada.",
         "tags": [
-          "User"
+          "User - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar ijin role berhasil diambil."
+          }
+        }
+      },
+      "put": {
+        "summary": "Simpan/Perbarui Ijin Role (Admin)",
+        "description": "Mengatur ijin akses untuk suatu role tertentu.",
+        "tags": [
+          "User - Admin"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ijin role berhasil disimpan."
+          }
+        }
+      }
+    },
+    "/role-permissions/{role}": {
+      "delete": {
+        "summary": "Hapus Role (Admin)",
+        "description": "Menghapus role dan semua ijin akses yang terkait dengannya.",
+        "tags": [
+          "User - Admin"
         ],
         "security": [
           {
@@ -2371,42 +3547,40 @@
         "parameters": [
           {
             "in": "path",
-            "name": "id",
+            "name": "role",
             "required": true,
             "schema": {
               "type": "string"
-            },
-            "description": "User UUID"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "User deleted"
-          },
-          "403": {
-            "description": "Admin access required"
+            "description": "Role berhasil dihapus."
           }
         }
       }
     },
     "/provinces": {
       "get": {
-        "summary": "Get All Provinces",
+        "summary": "Ambil Daftar Provinsi",
+        "description": "Mengambil data seluruh provinsi di Indonesia (Sumber: RajaOngkir).",
         "tags": [
-          "Wilayah"
+          "Content & Support"
         ],
         "responses": {
           "200": {
-            "description": "List of provinces"
+            "description": "Daftar provinsi berhasil diambil."
           }
         }
       }
     },
     "/regencies/{province_code}": {
       "get": {
-        "summary": "Get Regencies by Province Code",
+        "summary": "Ambil Daftar Kota/Kabupaten",
+        "description": "Mengambil semua data kota atau kabupaten berdasarkan kode provinsi tertentu.",
         "tags": [
-          "Wilayah"
+          "Content & Support"
         ],
         "parameters": [
           {
@@ -2415,21 +3589,23 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Kode/ID Provinsi."
           }
         ],
         "responses": {
           "200": {
-            "description": "List of regencies"
+            "description": "Daftar kota/kabupaten ditemukan."
           }
         }
       }
     },
     "/districts/{regency_code}": {
       "get": {
-        "summary": "Get Districts by Regency Code",
+        "summary": "Ambil Daftar Kecamatan",
+        "description": "Mengambil semua data kecamatan berdasarkan kode kota/kabupaten tertentu.",
         "tags": [
-          "Wilayah"
+          "Content & Support"
         ],
         "parameters": [
           {
@@ -2438,21 +3614,23 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Kode/ID Kota/Kabupaten."
           }
         ],
         "responses": {
           "200": {
-            "description": "List of districts"
+            "description": "Daftar kecamatan ditemukan."
           }
         }
       }
     },
     "/villages/{district_code}": {
       "get": {
-        "summary": "Get Villages by District Code",
+        "summary": "Ambil Daftar Kelurahan/Desa",
+        "description": "Mengambil semua data kelurahan atau desa berdasarkan kode kecamatan tertentu.",
         "tags": [
-          "Wilayah"
+          "Content & Support"
         ],
         "parameters": [
           {
@@ -2461,12 +3639,13 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "Kode/ID Kecamatan."
           }
         ],
         "responses": {
           "200": {
-            "description": "List of villages"
+            "description": "Daftar kelurahan/desa ditemukan."
           }
         }
       }
@@ -2474,64 +3653,36 @@
   },
   "tags": [
     {
-      "name": "Article",
-      "description": "Article management (Posts, Categories, Tags)"
+      "name": "Content & Support",
+      "description": "Artikel blog, FAQ, Banner, Data Wilayah, dan Pengaturan Sistem."
     },
     {
       "name": "Auth",
-      "description": "Authentication management"
+      "description": "Sistem masuk (login), daftar (register), dan keamanan akun."
     },
     {
-      "name": "Banner",
-      "description": "Banner management for Carousel and Tiles"
+      "name": "Order & Checkout",
+      "description": "Proses pembelian dari keranjang hingga pembayaran."
     },
     {
-      "name": "Cart",
-      "description": "Cart management"
+      "name": "Product - Storefront",
+      "description": "Akses data produk dan promo (Flash Sale) untuk pembeli."
     },
     {
-      "name": "Coupon",
-      "description": "Voucher and Coupon management"
+      "name": "Product - Admin",
+      "description": "Pengelolaan data produk, stok, varian, dan promo (Khusus Admin)."
     },
     {
-      "name": "Invoice",
-      "description": "Invoice management"
+      "name": "System & Media",
+      "description": "Upload file gambar/video dan tools internal pemeliharaan server."
     },
     {
-      "name": "Order",
-      "description": "Order management"
+      "name": "User - Customer",
+      "description": "Pengelolaan profil pelanggan dan alamat pengiriman."
     },
     {
-      "name": "Product",
-      "description": "Product management"
-    },
-    {
-      "name": "Review",
-      "description": "Product reviews management"
-    },
-    {
-      "name": "Shipping",
-      "description": "Shipping cost check"
-    },
-    {
-      "name": "Transaction",
-      "description": "Payment and transaction management"
-    },
-    {
-      "name": "Upload",
-      "description": "File upload management"
-    },
-    {
-      "name": "Address",
-      "description": "Address management"
-    },
-    {
-      "name": "User",
-      "description": "User management"
-    },
-    {
-      "name": "Wilayah",
-      "description": "Indonesian region data"
+      "name": "User - Admin",
+      "description": "Manajemen data pengguna dan hak akses (Khusus Admin)."
     }
   ]
 }

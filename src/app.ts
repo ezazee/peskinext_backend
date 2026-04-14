@@ -30,6 +30,34 @@ import CouponRoute from "./modules/coupon/CouponRoute";
 import TransactionRoute from "./modules/transaction/TransactionRoute";
 import InvoiceRoute from "./modules/invoice/InvoiceRoute";
 import PaymentRoute from "./modules/payment/PaymentRoute";
+import SettingRoute from "./modules/setting/SettingRoute";
+import FAQRoute from "./modules/faq/FAQRoutes";
+import FlashSaleRoute from "./modules/flash-sale/FlashSaleRoute";
+import db from "./config/database";
+
+// One-time Database Migration for Per-Variant Flash Sale
+const runMigrations = async () => {
+    try {
+        console.log("🚀 Running Database Migrations...");
+        // 1. Tambah kolom variant_id jika belum ada
+        await db.query(`ALTER TABLE flash_sale_items ADD COLUMN IF NOT EXISTS variant_id INTEGER;`);
+        
+        // 2. Hubungkan data lama ke varian pertama (agar tidak NULL)
+        await db.query(`
+            UPDATE flash_sale_items fsi 
+            SET variant_id = (SELECT id FROM product_variants pv WHERE pv.product_id = fsi.product_id LIMIT 1) 
+            WHERE variant_id IS NULL;
+        `);
+        
+        // 3. Set NOT NULL setelah data terisi
+        await db.query(`ALTER TABLE flash_sale_items ALTER COLUMN variant_id SET NOT NULL;`);
+        
+        console.log("✅ Migration Success: variant_id added to flash_sale_items");
+    } catch (err: any) {
+        console.error("❌ Migration Error:", err.message);
+    }
+};
+runMigrations();
 
 const app: Express = express();
 
@@ -52,7 +80,7 @@ app.use(helmet({
 app.use(hpp());
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    max: 10000, // Limit each IP to 10000 requests per windowMs (Development Friendly)
     message: "Too many requests from this IP, please try again after 15 minutes"
 });
 app.use(limiter);
@@ -80,7 +108,7 @@ app.use(cors({
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Cache-Control", "Pragma"]
 }));
 
 import passport from "./config/passport";
@@ -134,13 +162,17 @@ apiV1.use("/", BannerRoute);
 apiV1.use("/", TransactionRoute);
 apiV1.use("/", InvoiceRoute);
 apiV1.use("/", PaymentRoute);
+apiV1.use("/", SettingRoute);
+apiV1.use("/", FAQRoute);
 import NotificationRoute from "./modules/notification/NotificationRoute";
 apiV1.use("/notifications", NotificationRoute);
+apiV1.use("/flash-sales", FlashSaleRoute);
 
 app.use("/api/v1", apiV1);
 
 // Static for uploads
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+const UPLOAD_ROOT = path.resolve(__dirname, "../uploads");
+app.use("/uploads", express.static(UPLOAD_ROOT));
 
 app.get("/", (req: Request, res: Response) => {
     res.json({
@@ -162,7 +194,7 @@ app.use((err: any, req: Request, res: Response, next: any) => {
         console.error("Sentry Error ID:", res.sentry);
     }
 
-    console.error("Global Error:", err);
+    console.error("Global Error Structure:", err);
     res.status(err.status || 500).json({
         success: false,
         error: err.message || "Internal Server Error",

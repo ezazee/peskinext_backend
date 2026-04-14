@@ -13,11 +13,11 @@ interface UserAttributes {
     password?: string;
     status: "active" | "inactive" | "banned";
     images?: string;
-    role: "user" | "admin" | "writter" | "management" | "affiliate" | "finance";
+    role: string;
     birth_date?: string;
     is_google?: boolean;
-    refresh_token?: string; // Sesuai Auth Controller (refreshToken)
-
+    refresh_token?: string;
+    permissions?: string[] | null;
     reset_password_token?: string;
     reset_password_expires?: Date;
     created_at?: Date;
@@ -38,10 +38,11 @@ class Users extends Model<UserAttributes, UserCreationAttributes> implements Use
     public password!: string;
     public status!: "active" | "inactive" | "banned";
     public images!: string;
-    public role!: "user" | "admin" | "writter" | "management" | "affiliate" | "finance";
+    public role!: string;
     public birth_date!: string;
     public is_google!: boolean;
     public refresh_token!: string;
+    public permissions!: string[] | null;
 
     public reset_password_token!: string;
     public reset_password_expires!: Date;
@@ -72,7 +73,7 @@ Users.init(
         },
         images: { type: DataTypes.TEXT },
         role: {
-            type: DataTypes.ENUM("user", "admin", "writter", "management", "affiliate", "finance"),
+            type: DataTypes.STRING,
             defaultValue: "user"
         },
         birth_date: { type: DataTypes.DATEONLY },
@@ -81,6 +82,7 @@ Users.init(
             defaultValue: false
         },
         refresh_token: { type: DataTypes.TEXT },
+        permissions: { type: DataTypes.JSON },
         reset_password_token: { type: DataTypes.STRING },
         reset_password_expires: { type: DataTypes.DATE },
 

@@ -3,6 +3,11 @@ import * as DokuService from "./services/DokuService";
 import Orders from "../order/models/OrderModel";
 import Transaction from "../transaction/models/TransactionModel";
 import UserModel from "../user/models/UserModel";
+import * as CouponService from "../coupon/CouponService";
+import * as BiteshipService from "../shipping/services/BiteshipService";
+import OrderItems from "../order/models/OrderItemModel";
+import { deductStockForOrder, incrementSoldCount } from "../product/ProductService";
+import db from "../../config/database";
 
 export const createPayment = async (req: Request, res: Response) => {
     try {
@@ -61,9 +66,7 @@ export const createPayment = async (req: Request, res: Response) => {
     }
 };
 
-import * as BiteshipService from "../shipping/services/BiteshipService"; // Import Service
-
-// ... existing imports ...
+// Handle notification from payment gateway
 
 export const handleNotification = async (req: Request, res: Response) => {
     // DOKU sends notification here
@@ -105,41 +108,62 @@ export const handleNotification = async (req: Request, res: Response) => {
                 return res.status(200).json({ message: "OK" });
             }
 
-            transaction.status = "success";
-            transaction.doku_response = req.body;
-            await transaction.save();
-
             // Update Order Status
             const order = await Orders.findByPk(transaction.order_id);
             if (order) {
-                if (order.status !== 'paid') {
-                    order.status = "paid";
-                    await order.save();
+                if (order.status !== 'paid' && order.status !== 'processing' && order.status !== 'shipped') {
+                    const t = await db.transaction();
+                    try {
+                        order.status = "paid";
+                        await order.save({ transaction: t });
 
+                        transaction.status = "success";
+                        transaction.doku_response = req.body;
+                        await transaction.save({ transaction: t });
 
-                    // --- BITESHIP INTEGRATION START ---
-                    // Auto create shipping order
-                    const shippingResult = await BiteshipService.createBiteshipOrder(order);
+                        // --- STOCK & SOLD COUNT SYNC START ---
+                        const items = await OrderItems.findAll({ where: { order_id: order.id }, transaction: t });
+                        const itemData = items.map(item => ({ 
+                            product_id: item.product_id, 
+                            variant_id: item.variant_id, 
+                            quantity: item.quantity 
+                        }));
+                        
+                        await deductStockForOrder(itemData, t);
+                        await incrementSoldCount(itemData, t);
+                        // --- STOCK & SOLD COUNT SYNC END ---
 
-                    if (shippingResult.success) {
-
-
-                        // Update Order with Shipping Info
-                        order.status = "shipped"; // Or "processed" / "ready_to_ship"
-                        order.tracking_number = shippingResult.tracking_id || "";
-                        if (shippingResult.biteship_order_id) {
-                            order.biteship_order_id = shippingResult.biteship_order_id;
+                        // Increment Coupon usage if exists
+                        if (order.coupon_id) {
+                            try {
+                                await CouponService.useCoupon(order.coupon_id, t);
+                            } catch (couponErr) {
+                                console.error(`⚠️ Failed to track usage for coupon ${order.coupon_id}:`, couponErr);
+                            }
                         }
-                        await order.save();
 
+                        await t.commit();
 
-                    } else {
-                        console.warn(`⚠️ Failed to create shipping order for Order ${order.id}. Manual retry required.`);
-                        // Maybe update status to "processed" instead of "shipped" so admin knows to check?
-                        // order.status = "processed"; 
-                        // await order.save();
+                        // --- BITESHIP INTEGRATION START ---
+                        // Auto create shipping order (Outside transaction to avoid long locks)
+                        const shippingResult = await BiteshipService.createBiteshipOrder(order);
+
+                        if (shippingResult.success) {
+                            // Update Order with Shipping Info
+                            order.status = "shipped"; 
+                            order.tracking_number = shippingResult.tracking_id || "";
+                            if (shippingResult.biteship_order_id) {
+                                order.biteship_order_id = shippingResult.biteship_order_id;
+                            }
+                            await order.save();
+                        } else {
+                            console.warn(`⚠️ Failed to create shipping order for Order ${order.id}. Manual retry required.`);
+                        }
+                        // --- BITESHIP INTEGRATION END ---
+                    } catch (error) {
+                        await t.rollback();
+                        throw error;
                     }
-                    // --- BITESHIP INTEGRATION END ---
                 }
             }
         } else if (transaction_status === "FAILED" || transaction_status === "EXPIRED") {

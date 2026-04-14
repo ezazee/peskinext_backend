@@ -25,7 +25,7 @@ export const adminLogin = async (req: Request, res: Response) => {
         return res.json({
             message: "Login admin berhasil",
             token: access,
-            user: { id: user.id, name: user.name, email: user.email, role: user.role }
+            user: { id: user.id, name: user.name, email: user.email, role: user.role, permissions: user.permissions }
         });
     } catch (error: any) {
         const status = error.message.includes("Access denied") ? 403 : 401;
@@ -46,7 +46,7 @@ export const userLogin = async (req: Request, res: Response) => {
         return res.json({
             message: "Login user berhasil",
             token: access,
-            user: { id: user.id, name: user.name, email: user.email, role: user.role }
+            user: { id: user.id, name: user.name, email: user.email, role: user.role, permissions: user.permissions }
         });
     } catch (error: any) {
         const status = error.message.includes("Access denied") ? 403 : 401;

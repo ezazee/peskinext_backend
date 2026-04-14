@@ -10,7 +10,7 @@ import { Op, fn, col, where } from "sequelize";
 // Helper
 const normChannel = (v: any) => (v ?? "default").toString().trim().toLowerCase();
 
-const formatProductToFrontend = (product: any, channelQuery?: string) => {
+const formatProductToFrontend = (product: any, channelQuery?: string, activePromoItems?: Map<number, any>) => {
     const p = product.toJSON ? product.toJSON() : product;
     const channelQ = channelQuery ? normChannel(channelQuery) : null;
 
@@ -27,6 +27,7 @@ const formatProductToFrontend = (product: any, channelQuery?: string) => {
     const galleryImages = (p.images || []).map((i: any) => i.image_url);
 
     // Filter/Process Variants
+    let hasProductLevelFlashSale = false;
     const variants = (p.variants || []).map((v: any) => {
         let prices = v.prices || [];
         let stocks = v.stocks || [];
@@ -41,8 +42,16 @@ const formatProductToFrontend = (product: any, channelQuery?: string) => {
             || prices.find((pr: any) => normChannel(pr.channel) === "default")
             || prices[0];
 
-        const price = activePrice ? Number(activePrice.price) : 0;
-        const oldPrice = activePrice && activePrice.price_strikethrough ? Number(activePrice.price_strikethrough) : undefined;
+        let price = activePrice ? Number(activePrice.price) : 0;
+        let oldPrice = activePrice && activePrice.price_strikethrough ? Number(activePrice.price_strikethrough) : undefined;
+
+        // FLASH SALE OVERRIDE (GLOBAL SYNC)
+        if (activePromoItems && activePromoItems.has(Number(v.id))) {
+            const promo = activePromoItems.get(Number(v.id));
+            oldPrice = promo.original_price || price; // Use promo's original price if available
+            price = Number(promo.flash_sale_price);
+            hasProductLevelFlashSale = true;
+        }
 
         // Stock Logic
         const stock = stocks.reduce((sum: number, st: any) => sum + (st.status !== 'expired' ? Number(st.qty) : 0), 0);
@@ -54,27 +63,47 @@ const formatProductToFrontend = (product: any, channelQuery?: string) => {
             oldPrice,
             stock,
             weight: v.weight ? Number(v.weight) : 0,
+            soldCount: Number(v.sold_count || 0),
             // Keep original for internal use if needed, but frontend only needs above
             raw_prices: prices,
             raw_stocks: stocks
         };
     });
 
-    // Calculate Product Level Price Range
+    // Best-selling variant count logic
+    const bestVariantSales = variants.reduce((max: number, v: any) => Math.max(max, v.soldCount), 0);
+    // Use the maximum variant sales as the representative soldCount if total sold_count is 0 (fallback)
+    // or if the user specifically wants the best variant highlighted.
+    // For now, I'll use the MAX variant sales to satisfy "ambil variant yang banyak terjual aja".
+    const displaySoldCount = Math.max(bestVariantSales, Number(p.sold_count || 0));
+
+    // Calculate Product Level Price Range & Identify "Hero" Variant (lowest price)
     let minPrice = Infinity;
     let maxPrice = -Infinity;
     let minOldPrice = Infinity;
     let maxOldPrice = -Infinity;
     let hasVariants = variants.length > 0;
+    let heroVariant: any = null;
 
     variants.forEach((v: any) => {
-        if (v.price < minPrice) minPrice = v.price;
+        // Find absolute min/max for range display
+        if (v.price < minPrice) {
+            minPrice = v.price;
+            heroVariant = v; // The variant that determines the displayed "min" price
+        }
         if (v.price > maxPrice) maxPrice = v.price;
+
+        // Keep track of old price ranges for complex displays if needed
         if (v.oldPrice) {
-            if (v.oldPrice < minOldPrice) minOldPrice = v.oldPrice;
             if (v.oldPrice > maxOldPrice) maxOldPrice = v.oldPrice;
         }
     });
+
+    // Strategy: The displayed "old price" (strikethrough) must match the "min price" variant
+    // to keep the discount percentage consistent and honest.
+    if (heroVariant && heroVariant.oldPrice) {
+        minOldPrice = heroVariant.oldPrice;
+    }
 
     if (!hasVariants) {
         minPrice = 0;
@@ -84,13 +113,13 @@ const formatProductToFrontend = (product: any, channelQuery?: string) => {
     }
 
     const priceString = minPrice === maxPrice
-        ? `Rp${minPrice.toLocaleString('id-ID')}`
-        : `Rp${minPrice.toLocaleString('id-ID')} - Rp${maxPrice.toLocaleString('id-ID')}`;
+        ? `Rp${Math.round(minPrice).toLocaleString('id-ID')}`
+        : `Rp${Math.round(minPrice).toLocaleString('id-ID')} - Rp${Math.round(maxPrice).toLocaleString('id-ID')}`;
 
     const oldPriceString = minOldPrice === Infinity ? undefined :
         (minOldPrice === maxOldPrice
-            ? `Rp${minOldPrice.toLocaleString('id-ID')}`
-            : `Rp${minOldPrice.toLocaleString('id-ID')} - Rp${maxOldPrice.toLocaleString('id-ID')}`);
+            ? `Rp${Math.round(minOldPrice).toLocaleString('id-ID')}`
+            : `Rp${Math.round(minOldPrice).toLocaleString('id-ID')} - Rp${Math.round(maxOldPrice).toLocaleString('id-ID')}`);
 
     return {
         id: p.id,
@@ -106,16 +135,36 @@ const formatProductToFrontend = (product: any, channelQuery?: string) => {
         img,
         imgHover,
         galleryImages,
-        isFlashSale: !!p.is_flash_sale,
+        isFlashSale: hasProductLevelFlashSale || !!p.is_flash_sale,
         isEvent: !!p.is_event,
         type: p.type || "single",
         variants,
         weightGr: Number(p.weight_gr || 0),
-        soldCount: Number(p.sold_count || 0)
+        soldCount: displaySoldCount
     };
 };
 
-export const getAllProducts = async (searchQuery?: string) => {
+export const incrementSoldCount = async (items: { variant_id?: number; product_id: string; quantity: number }[], transaction: any) => {
+    for (const item of items) {
+        // Increment Product Level
+        await Products.increment('sold_count', {
+            by: item.quantity,
+            where: { id: item.product_id },
+            transaction
+        });
+
+        // Increment Variant Level
+        if (item.variant_id) {
+            await ProductVariants.increment('sold_count', {
+                by: item.quantity,
+                where: { id: item.variant_id },
+                transaction
+            });
+        }
+    }
+};
+
+export const getAllProducts = async (searchQuery?: string, activePromoItems?: Map<number, any>) => {
     const whereCondition: any = {};
 
     if (searchQuery) {
@@ -144,6 +193,8 @@ export const getAllProducts = async (searchQuery?: string) => {
                         model: ProductVariantPrices,
                         as: "prices",
                         attributes: ["id", "channel", "price", "price_strikethrough"],
+                        where: { channel: "default" },
+                        required: false
                     },
                     {
                         model: ProductStocks,
@@ -156,10 +207,10 @@ export const getAllProducts = async (searchQuery?: string) => {
         order: [["created_at", "DESC"]], // Changed from ID ASC because UUID is not sortable by insertion order easily
     });
 
-    return products.map((product) => formatProductToFrontend(product));
+    return products.map((product) => formatProductToFrontend(product, undefined, activePromoItems));
 };
 
-export const getProductDetail = async (productId: string, channelQuery?: string) => {
+export const getProductDetail = async (productId: string, channelQuery?: string, activePromoItems?: Map<number, any>) => {
     const include = [
         {
             model: ProductImages,
@@ -175,6 +226,8 @@ export const getProductDetail = async (productId: string, channelQuery?: string)
                     model: ProductVariantPrices,
                     as: "prices",
                     attributes: ["id", "channel", "price", "price_strikethrough"],
+                    where: { channel: "default" },
+                    required: false
                 },
                 {
                     model: ProductStocks,
@@ -194,7 +247,7 @@ export const getProductDetail = async (productId: string, channelQuery?: string)
 
     if (!product) throw new Error("Produk tidak ditemukan");
 
-    return formatProductToFrontend(product, channelQuery);
+    return formatProductToFrontend(product, channelQuery, activePromoItems);
 };
 
 export const createProduct = async (data: any) => {
@@ -409,6 +462,62 @@ export const deleteStock = async (variantId: string, stockId: string) => {
     return true;
 };
 
+export const transferStock = async (data: { variantId: string | number, fromChannel: string, toChannel: string, qty: number }) => {
+    const t = await ProductStocks.sequelize!.transaction();
+    try {
+        const { variantId, fromChannel, toChannel, qty } = data;
+        const fromCh = normChannel(fromChannel);
+        const toCh = normChannel(toChannel);
+
+        if (fromCh === toCh) throw new Error("Lokasi sumber dan tujuan tidak boleh sama");
+        if (qty <= 0) throw new Error("Jumlah transfer harus lebih dari 0");
+
+        // 1. Find source stocks
+        const sourceStocks = await ProductStocks.findAll({
+            where: { variant_id: variantId, channel: fromCh, status: { [Op.ne]: "expired" } },
+            order: [["tanggal_expired", "ASC"], ["created_at", "ASC"]], // FEFO: First Expired First Out
+            transaction: t
+        });
+
+        const totalAvailable = sourceStocks.reduce((sum, s) => sum + s.qty, 0);
+        if (totalAvailable < qty) {
+            throw new Error(`Stok di ${fromChannel} tidak mencukupi (Tersedia: ${totalAvailable})`);
+        }
+
+        // 2. Deduct from source (can span multiple batches)
+        let remainingToDeduct = qty;
+        let lastSourceStock: any = null;
+
+        for (const stock of sourceStocks) {
+            if (remainingToDeduct <= 0) break;
+            const deduct = Math.min(stock.qty, remainingToDeduct);
+            await stock.update({ qty: stock.qty - deduct }, { transaction: t });
+            remainingToDeduct -= deduct;
+            lastSourceStock = stock;
+        }
+
+        // 3. Add to target
+        // We try to find if there's an existing stock record with same expiry/batch in target channel
+        // For simplicity, we just create a NEW record in the target channel 
+        // copied from the lastSourceStock info (expiry date, entry date)
+        await ProductStocks.create({
+            product_id: lastSourceStock.product_id,
+            variant_id: variantId as any,
+            qty: qty,
+            channel: toCh,
+            tanggal_masuk: new Date(),
+            tanggal_expired: lastSourceStock.tanggal_expired,
+            status: lastSourceStock.status || "noexpired"
+        } as any, { transaction: t });
+
+        await t.commit();
+        return true;
+    } catch (error) {
+        await t.rollback();
+        throw error;
+    }
+};
+
 export const addProductVariant = async (data: any) => {
     const t = await Products.sequelize!.transaction();
     try {
@@ -475,8 +584,29 @@ export const updateProductVariant = async (variantId: string, data: any) => {
             await variant.save({ transaction: t });
         }
 
-        // Logic for prices and stocks update (simplified for brevity, similar to controller)
-        // ... (Implement full logic if critical, but for now trusting replacement)
+        // Logic for prices update
+        if (prices && Array.isArray(prices)) {
+            for (const p of prices) {
+                const channelNorm = (p.channel || "default").toString().trim().toLowerCase();
+                const [priceRecord, created] = await ProductVariantPrices.findOrCreate({
+                    where: { variant_id: variantId, channel: channelNorm },
+                    defaults: {
+                        variant_id: Number(variantId),
+                        channel: channelNorm as any,
+                        price: p.price,
+                        price_strikethrough: p.price_strikethrough ?? null
+                    },
+                    transaction: t
+                });
+
+                if (!created) {
+                    await priceRecord.update({
+                        price: p.price,
+                        price_strikethrough: p.price_strikethrough ?? null
+                    }, { transaction: t });
+                }
+            }
+        }
 
         await t.commit();
         return true;
@@ -508,8 +638,8 @@ export const getVariantById = async (variantId: string) => {
     return await ProductVariants.findByPk(variantId);
 };
 
-export const calculateProductPrice = async (data: { productId: string, variantId: number, qty: number, channel?: string }) => {
-    const { productId, variantId, qty, channel } = data;
+export const calculateProductPrice = async (data: { productId: string, variantId: number, qty: number, channel?: string, activePromoItems?: Map<number, any> }) => {
+    const { productId, variantId, qty, channel, activePromoItems } = data;
     // Trigger restart 1
 
     // 1. Validasi Input
@@ -556,8 +686,13 @@ export const calculateProductPrice = async (data: { productId: string, variantId
         throw new Error("Harga tidak tersedia untuk varian ini");
     }
 
-    const unitPrice = Number(activePrice.price);
-    const oldPrice = activePrice.price_strikethrough ? Number(activePrice.price_strikethrough) : null;
+    const unitPrice = activePromoItems && activePromoItems.has(Number(variantId))
+        ? Number(activePromoItems.get(Number(variantId)).flash_sale_price)
+        : Number(activePrice.price);
+
+    const oldPrice = activePromoItems && activePromoItems.has(Number(variantId))
+        ? Number(activePromoItems.get(Number(variantId)).original_price || activePrice.price)
+        : (activePrice.price_strikethrough ? Number(activePrice.price_strikethrough) : null);
 
     // 4. Hitung Total Stock (Opsional: Cek availability)
     let stocks = vJson.stocks || [];
@@ -586,4 +721,62 @@ export const calculateProductPrice = async (data: { productId: string, variantId
         total_weight: weightTotal,
         stock_available: totalStock
     };
+};
+
+export const deductStockForOrder = async (items: { variant_id?: number; product_id: string; quantity: number }[], transaction: any) => {
+    for (const item of items) {
+        if (!item.variant_id) continue;
+        const stocks = await ProductStocks.findAll({
+            where: {
+                variant_id: item.variant_id,
+                channel: { [Op.in]: ["website", "default"] },
+                status: "noexpired"
+            },
+            order: [["tanggal_expired", "ASC"], ["created_at", "ASC"]],
+            transaction
+        });
+
+        let remainingToDeduct = item.quantity;
+        for (const stock of stocks) {
+            if (remainingToDeduct === 0) break;
+            if (stock.qty > 0) {
+                const deduct = Math.min(stock.qty, remainingToDeduct);
+                await stock.update({ qty: stock.qty - deduct }, { transaction });
+                remainingToDeduct -= deduct;
+            }
+        }
+        
+        if (remainingToDeduct > 0) {
+            console.warn(`[WARNING] DeductStock: Stok tidak mencukupi untuk variant_id: ${item.variant_id}, minus: ${remainingToDeduct}`);
+        }
+    }
+};
+
+export const restoreStockForOrder = async (items: { variant_id?: number; product_id: string; quantity: number }[], transaction: any) => {
+    for (const item of items) {
+        if (!item.variant_id) continue;
+        const stock = await ProductStocks.findOne({
+            where: {
+                variant_id: item.variant_id,
+                channel: { [Op.in]: ["website", "default"] },
+                status: "noexpired"
+            },
+            order: [["created_at", "DESC"]], // Return to newest active stock pile
+            transaction
+        });
+
+        if (stock) {
+            await stock.update({ qty: stock.qty + item.quantity }, { transaction });
+        } else {
+            await ProductStocks.create({
+                variant_id: item.variant_id as any,
+                product_id: item.product_id as any,
+                qty: item.quantity,
+                channel: "website",
+                tanggal_masuk: new Date(),
+                tanggal_expired: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // 1 year fallback
+                status: "noexpired"
+            } as any, { transaction });
+        }
+    }
 };

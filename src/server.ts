@@ -7,13 +7,22 @@ import "./instrument";
 
 import app from "./app";
 import { syncDB } from "./database/migrations/migrate";
+import { seedInitialSettings } from "./modules/setting/SettingService";
+import { seedBanners } from "./database/seeders/seedBanners";
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 (async () => {
-    // await syncDB();
-    // @ts-ignore
-    app.listen(Number(PORT), "0.0.0.0", () => {
-        console.log(`🚀 Server running at port ${PORT}`);
-    });
+    try {
+        await syncDB();
+        await seedInitialSettings();
+        // app.listen
+        // @ts-ignore
+        app.listen(Number(PORT), "0.0.0.0", () => {
+            console.log(`🚀 Server running at port ${PORT}`);
+        });
+    } catch (error) {
+        console.error("❌ Fatal error during server startup:", error);
+        process.exit(1);
+    }
 })();

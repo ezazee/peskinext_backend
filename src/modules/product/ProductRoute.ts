@@ -6,17 +6,81 @@ const router = express.Router();
 /**
  * @swagger
  * tags:
- *   name: Product
- *   description: Product management
+ *   - name: Product - Storefront
+ *     description: Akses data produk untuk pembeli (Halaman Utama, Detail Produk).
+ *   - name: Product - Admin
+ *     description: Pengelolaan data produk, stok, dan varian (Khusus Admin).
  */
 
-// product
+// --- STOREFRONT ENDPOINTS ---
+
+/**
+ * @swagger
+ * /products:
+ *   get:
+ *     summary: Ambil Semua Produk
+ *     description: Mengambil daftar semua produk yang aktif untuk ditampilkan di website depan.
+ *     tags: [Product - Storefront]
+ *     responses:
+ *       200:
+ *         description: Daftar produk berhasil diambil.
+ */
+router.get("/products", ProductController.getAllProducts);
+
+/**
+ * @swagger
+ * /products/{productId}:
+ *   get:
+ *     summary: Detail Produk
+ *     description: Mengambil informasi lengkap sebuah produk berdasarkan ID atau Slug.
+ *     tags: [Product - Storefront]
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Data produk ditemukan.
+ */
+router.get("/products/:productId", ProductController.getProductDetail);
+
+/**
+ * @swagger
+ * /products/calculate:
+ *   post:
+ *     summary: Hitung Harga Produk
+ *     description: Menghitung harga total berdasarkan varian yang dipilih dan jumlah (qty). Digunakan sebelum masuk ke checkout.
+ *     tags: [Product - Storefront]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productId, variantId, qty]
+ *             properties:
+ *               productId: { type: string }
+ *               variantId: { type: integer }
+ *               qty: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Hasil perhitungan harga.
+ */
+router.post("/products/calculate", ProductController.calculatePrice);
+
+// --- ADMIN ENDPOINTS ---
+
 /**
  * @swagger
  * /products:
  *   post:
- *     summary: Create New Product
- *     tags: [Product]
+ *     summary: Buat Produk Baru
+ *     description: Menambahkan produk baru ke dalam katalog (Khusus Admin).
+ *     tags: [Product - Admin]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -25,76 +89,34 @@ const router = express.Router();
  *             type: object
  *             required: [name, category, price, weight]
  *             properties:
- *               name:
- *                 type: string
- *               category:
- *                 type: string
- *               price:
- *                 type: number
- *               weight:
- *                 type: number
+ *               name: { type: string }
+ *               category: { type: string }
+ *               price: { type: number }
+ *               weight: { type: number }
+ *               description: { type: string }
  *     responses:
  *       201:
- *         description: Product created
+ *         description: Produk berhasil dibuat.
  */
-router.post("/products/calculate", ProductController.calculatePrice);
 router.post("/products", ProductController.createProduct);
-
-/**
- * @swagger
- * /products:
- *   get:
- *     summary: Get All Products
- *     tags: [Product]
- *     responses:
- *       200:
- *         description: List of products
- */
-router.get("/products", ProductController.getAllProducts);
-
-/**
- * @swagger
- * /products/{productId}:
- *   get:
- *     summary: Get Product Detail
- *     tags: [Product]
- *     parameters:
- *       - in: path
- *         name: productId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Product detail
- */
-router.get("/products/:productId", ProductController.getProductDetail);
 
 /**
  * @swagger
  * /products/{id}:
  *   patch:
- *     summary: Update Product
- *     tags: [Product]
+ *     summary: Update Data Produk
+ *     description: Mengubah informasi produk yang sudah ada.
+ *     tags: [Product - Admin]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               price:
- *                 type: number
+ *         schema: { type: string }
  *     responses:
  *       200:
- *         description: Product updated
+ *         description: Data produk berhasil diupdate.
  */
 router.patch("/products/:id", ProductController.updateProduct);
 
@@ -102,40 +124,44 @@ router.patch("/products/:id", ProductController.updateProduct);
  * @swagger
  * /products/{productId}:
  *   delete:
- *     summary: Delete Product
- *     tags: [Product]
+ *     summary: Hapus Produk
+ *     description: Menghapus produk dari database secara permanen.
+ *     tags: [Product - Admin]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: productId
  *         required: true
- *         schema:
- *           type: string
+ *         schema: { type: string }
  *     responses:
  *       200:
- *         description: Product deleted
+ *         description: Produk berhasil dihapus.
  */
 router.delete("/products/:productId", ProductController.deleteProduct);
 
-// stock product
+// --- STOCK MANAGEMENT ---
+
 /**
  * @swagger
  * /stock:
  *   post:
- *     summary: Add Stock
- *     tags: [Product]
+ *     summary: Tambah Stok (Admin)
+ *     description: Menambah jumlah stok untuk varian produk tertentu.
+ *     tags: [Product - Admin]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       content:
  *         application/json:
  *           schema:
  *             type: object
  *             properties:
- *               variant_id:
- *                 type: integer
- *               quantity:
- *                 type: integer
+ *               variant_id: { type: integer }
+ *               quantity: { type: integer }
  *     responses:
  *       201:
- *         description: Stock added
+ *         description: Stok berhasil ditambahkan.
  */
 router.post("/stock", ProductController.addStock);
 
@@ -143,17 +169,19 @@ router.post("/stock", ProductController.addStock);
  * @swagger
  * /stock/{productId}:
  *   get:
- *     summary: Get Product Stock
- *     tags: [Product]
+ *     summary: Lihat Stok Produk (Admin)
+ *     description: Melihat riwayat atau sisa stok dari suatu produk.
+ *     tags: [Product - Admin]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: productId
  *         required: true
- *         schema:
- *           type: string
+ *         schema: { type: string }
  *     responses:
  *       200:
- *         description: Stock details
+ *         description: Data stok berhasil diambil.
  */
 router.get("/stock/:productId", ProductController.getProductStock);
 
@@ -161,25 +189,19 @@ router.get("/stock/:productId", ProductController.getProductStock);
  * @swagger
  * /stock/{id}:
  *   patch:
- *     summary: Update Stock
- *     tags: [Product]
+ *     summary: Edit Catatan Stok (Admin)
+ *     description: Mengubah data histori stok yang sudah tercatat.
+ *     tags: [Product - Admin]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               quantity:
- *                 type: integer
+ *         schema: { type: string }
  *     responses:
  *       200:
- *         description: Stock updated
+ *         description: Stok berhasil diupdate.
  */
 router.patch("/stock/:id", ProductController.updateStock);
 
@@ -187,41 +209,58 @@ router.patch("/stock/:id", ProductController.updateStock);
  * @swagger
  * /stock/{variantId}/{stockId}:
  *   delete:
- *     summary: Delete Stock
- *     tags: [Product]
+ *     summary: Hapus Riwayat Stok (Admin)
+ *     description: Menghapus salah satu catatan perubahan stok.
+ *     tags: [Product - Admin]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: variantId
  *         required: true
- *         schema:
- *           type: integer
+ *         schema: { type: integer }
  *       - in: path
  *         name: stockId
  *         required: true
- *         schema:
- *           type: string
+ *         schema: { type: string }
  *     responses:
  *       200:
- *         description: Stock deleted
+ *         description: Catatan stok berhasil dihapus.
  */
 router.delete("/stock/:variantId/:stockId", ProductController.deleteStock);
 
-// variant product
+/**
+ * @swagger
+ * /products/transfer:
+ *   post:
+ *     summary: Transfer Stok (Admin)
+ *     description: Memindahkan stok dari satu varian ke varian lain.
+ *     tags: [Product - Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Transfer stok berhasil.
+ */
+router.post("/products/transfer", ProductController.transferStock);
+
+// --- VARIANT MANAGEMENT ---
+
 /**
  * @swagger
  * /variant/{variantId}:
  *   get:
- *     summary: Get Variant Detail
- *     tags: [Product]
+ *     summary: Ambil Detail Varian (Admin)
+ *     description: "Melihat informasi rinci sebuah varian produk (misal: ukuran, warna, harga spesifik)."
+ *     tags: [Product - Admin]
  *     parameters:
  *       - in: path
  *         name: variantId
  *         required: true
- *         schema:
- *           type: integer
+ *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Variant detail
+ *         description: Data varian berhasil ditemukan.
  */
 router.get("/variant/:variantId", ProductController.getVariant);
 
@@ -229,23 +268,23 @@ router.get("/variant/:variantId", ProductController.getVariant);
  * @swagger
  * /variant:
  *   post:
- *     summary: Add Variant
- *     tags: [Product]
+ *     summary: Tambah Varian Produk (Admin)
+ *     description: "Membuat varian baru untuk suatu produk (misal: Saku 50ml, Saku 100ml)."
+ *     tags: [Product - Admin]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       content:
  *         application/json:
  *           schema:
  *             type: object
  *             properties:
- *               product_id:
- *                 type: string
- *               variant_name:
- *                 type: string
- *               weight:
- *                 type: number
+ *               product_id: { type: string }
+ *               variant_name: { type: string }
+ *               weight: { type: number }
  *     responses:
  *       201:
- *         description: Variant added
+ *         description: Varian berhasil ditambahkan.
  */
 router.post("/variant", ProductController.addVariant);
 
@@ -253,22 +292,23 @@ router.post("/variant", ProductController.addVariant);
  * @swagger
  * /variant/{productId}/{variantId}:
  *   delete:
- *     summary: Delete Variant
- *     tags: [Product]
+ *     summary: Hapus Varian (Admin)
+ *     description: Menghapus varian dari produk tertentu.
+ *     tags: [Product - Admin]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: productId
  *         required: true
- *         schema:
- *           type: string
+ *         schema: { type: string }
  *       - in: path
  *         name: variantId
  *         required: true
- *         schema:
- *           type: integer
+ *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Variant deleted
+ *         description: Varian berhasil dihapus.
  */
 router.delete("/variant/:productId/:variantId", ProductController.deleteVariant);
 
@@ -276,25 +316,19 @@ router.delete("/variant/:productId/:variantId", ProductController.deleteVariant)
  * @swagger
  * /variant/{variantId}:
  *   patch:
- *     summary: Update Variant
- *     tags: [Product]
+ *     summary: Perbarui Varian (Admin)
+ *     description: Mengubah informasi nama atau data lain pada varian.
+ *     tags: [Product - Admin]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: variantId
  *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               variant_name:
- *                 type: string
+ *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Variant updated
+ *         description: Varian berhasil diupdate.
  */
 router.patch("/variant/:variantId", ProductController.updateVariant);
 

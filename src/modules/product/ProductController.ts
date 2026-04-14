@@ -1,10 +1,54 @@
 import { Request, Response } from "express";
 import * as ProductService from "./ProductService";
+import { Op } from "sequelize";
+import FlashSale from "../flash-sale/models/FlashSaleModel";
+import FlashSaleItem from "../flash-sale/models/FlashSaleItemModel";
+
+/** HELPER: Get currently active flash sale items as a Map<variant_id, item_data> */
+const getActivePromoMap = async () => {
+    const now = new Date();
+    const activeCampaign = await FlashSale.findOne({
+        where: {
+            is_active: true,
+            start_time: { [Op.lte]: now },
+            end_time: { [Op.gte]: now }
+        },
+        include: [{ 
+            model: FlashSaleItem, 
+            as: "items",
+            attributes: ["variant_id", "flash_sale_price"],
+            include: [{
+                model: require("../product/models/ProductVariantModel").default,
+                as: "variant",
+                attributes: ["id"],
+                include: [{
+                    model: require("../product/models/ProductVariantPriceModel").default,
+                    as: "prices",
+                    where: { channel: "default" },
+                    required: false
+                }]
+            }]
+        }]
+    }) as any;
+
+    const promoMap = new Map<number, any>();
+    if (activeCampaign && activeCampaign.items) {
+        activeCampaign.items.forEach((item: any) => {
+            const variantPrice = item.variant?.prices?.[0]?.price || 0;
+            promoMap.set(Number(item.variant_id), {
+                flash_sale_price: item.flash_sale_price,
+                original_price: variantPrice
+            });
+        });
+    }
+    return promoMap;
+};
 
 export const getAllProducts = async (req: Request, res: Response) => {
     try {
         const search = req.query.search as string;
-        const products = await ProductService.getAllProducts(search);
+        const promoMap = await getActivePromoMap();
+        const products = await ProductService.getAllProducts(search, promoMap);
         res.json(products);
     } catch (error: any) {
         res.status(500).json({ message: error.message });
@@ -14,11 +58,13 @@ export const getAllProducts = async (req: Request, res: Response) => {
 export const calculatePrice = async (req: Request, res: Response) => {
     try {
         const { productId, variantId, qty, channel } = req.body;
+        const promoMap = await getActivePromoMap();
         const result = await ProductService.calculateProductPrice({
             productId,
             variantId: Number(variantId),
             qty: Number(qty),
-            channel: channel as string
+            channel: channel as string,
+            activePromoItems: promoMap
         });
         res.json(result);
     } catch (error: any) {
@@ -28,10 +74,15 @@ export const calculatePrice = async (req: Request, res: Response) => {
 
 export const getProductDetail = async (req: Request, res: Response) => {
     try {
-        const product = await ProductService.getProductDetail(req.params.productId as string, req.query.channel as string);
+        const promoMap = await getActivePromoMap();
+        const product = await ProductService.getProductDetail(
+            req.params.productId as string, 
+            req.query.channel as string, 
+            promoMap
+        );
         res.json(product);
     } catch (error: any) {
-        res.status(error.message === "Produk tidak ditemukan" ? 404 : 500).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -73,10 +124,23 @@ export const getProductStock = async (req: Request, res: Response) => {
 
 export const addStock = async (req: Request, res: Response) => {
     try {
-        await ProductService.addStock(req.body.stocks);
+        // Handle both { stocks: [...] } and direct array [...]
+        const stocks = Array.isArray(req.body) ? req.body : req.body.stocks;
+        if (!stocks) throw new Error("Stocks data are required");
+        
+        await ProductService.addStock(stocks);
         res.status(201).json({ message: "Stok berhasil ditambahkan" });
     } catch (error: any) {
         res.status(500).json({ message: error.message });
+    }
+}
+
+export const transferStock = async (req: Request, res: Response) => {
+    try {
+        await ProductService.transferStock(req.body);
+        res.json({ message: "Transfer stok berhasil" });
+    } catch (error: any) {
+        res.status(400).json({ message: error.message });
     }
 }
 

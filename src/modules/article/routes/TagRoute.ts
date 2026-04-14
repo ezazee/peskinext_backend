@@ -5,13 +5,21 @@ const router = express.Router();
 
 /**
  * @swagger
+ * tags:
+ *   name: Content & Support
+ *   description: Artikel blog, FAQ, Banner, Data Wilayah, dan Pengaturan Sistem.
+ */
+
+/**
+ * @swagger
  * /tags:
  *   get:
- *     summary: Get All Tags
- *     tags: [Article]
+ *     summary: Ambil Semua Tag Artikel
+ *     description: "Mengambil daftar semua label/tag yang digunakan untuk mengelompokkan artikel blog (misal: #skincare, #tips, #promo)."
+ *     tags: [Content & Support]
  *     responses:
  *       200:
- *         description: List of tags
+ *         description: Daftar tag berhasil diambil.
  */
 router.get("/tags", TagController.getTags);
 
@@ -19,8 +27,9 @@ router.get("/tags", TagController.getTags);
  * @swagger
  * /tags/{id}:
  *   get:
- *     summary: Get Tag by ID
- *     tags: [Article]
+ *     summary: Detail Tag by ID
+ *     description: Mengambil informasi sebuah tag berdasarkan ID uniknya.
+ *     tags: [Content & Support]
  *     parameters:
  *       - in: path
  *         name: id
@@ -29,7 +38,7 @@ router.get("/tags", TagController.getTags);
  *           type: integer
  *     responses:
  *       200:
- *         description: Tag details
+ *         description: Data tag berhasil ditemukan.
  */
 router.get("/tags/:id", TagController.getTagById);
 
@@ -37,8 +46,11 @@ router.get("/tags/:id", TagController.getTagById);
  * @swagger
  * /tags/{id}:
  *   patch:
- *     summary: Update Tag
- *     tags: [Article]
+ *     summary: Perbarui Tag (Admin)
+ *     description: Mengubah nama atau slug dari sebuah tag yang sudah ada.
+ *     tags: [Content & Support]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -53,9 +65,11 @@ router.get("/tags/:id", TagController.getTagById);
  *             properties:
  *               name:
  *                 type: string
+ *               slug:
+ *                 type: string
  *     responses:
  *       200:
- *         description: Tag updated
+ *         description: Tag berhasil diperbarui.
  */
 router.patch("/tags/:id", TagController.updateTag);
 
@@ -63,8 +77,11 @@ router.patch("/tags/:id", TagController.updateTag);
  * @swagger
  * /tags/{id}:
  *   delete:
- *     summary: Delete Tag
- *     tags: [Article]
+ *     summary: Hapus Tag (Admin)
+ *     description: Menghapus label/tag dari sistem secara permanen.
+ *     tags: [Content & Support]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -73,7 +90,7 @@ router.patch("/tags/:id", TagController.updateTag);
  *           type: integer
  *     responses:
  *       200:
- *         description: Tag deleted
+ *         description: Tag berhasil dihapus.
  */
 router.delete("/tags/:id", TagController.deleteTag);
 

@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Op } from "sequelize";
 import Posts from "../models/PostModel";
 import Categories from "../models/CategoryModel";
 import Tags from "../models/TagModel";
@@ -60,6 +61,7 @@ export const getAllPosts = async (req: Request, res: Response) => {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         const categorySlug = req.query.category as string;
+        const searchQuery = req.query.q as string;
 
         // Calculate default offset or use manual override
         let offset = (page - 1) * limit;
@@ -68,13 +70,12 @@ export const getAllPosts = async (req: Request, res: Response) => {
         }
 
         console.log("🔍 [getAllPosts] Query Params:", req.query);
-        console.log("🔍 [getAllPosts] Filtering by Category Slug:", categorySlug);
+        if (searchQuery) console.log("🔍 [getAllPosts] Searching for:", searchQuery);
 
         const includeOptions: any[] = [
             {
                 model: Categories,
                 attributes: ["id", "name", "slug"],
-                // If categorySlug is present, filter by it. This creates an INNER JOIN.
                 required: !!categorySlug,
                 where: categorySlug ? { slug: categorySlug } : undefined
             },
@@ -82,13 +83,26 @@ export const getAllPosts = async (req: Request, res: Response) => {
             { model: PostImages, as: "images", attributes: ["id", "image_url", "alt_text"] },
         ];
 
+        // Construct where clause
+        const whereClause: any = {};
+        if (req.query.slug) {
+            whereClause.slug = req.query.slug as string;
+        }
+
+        if (searchQuery) {
+            whereClause[Op.or] = [
+                { title: { [Op.iLike]: `%${searchQuery}%` } },
+                { content: { [Op.iLike]: `%${searchQuery}%` } }
+            ];
+        }
+
         const { count, rows } = await Posts.findAndCountAll({
-            where: req.query.slug ? { slug: req.query.slug as string } : undefined,
+            where: whereClause,
             include: includeOptions,
             limit: limit,
             offset: offset,
             order: [['created_at', 'DESC']],
-            distinct: true // Important for correct count with includes
+            distinct: true 
         });
 
         console.log(`✅ [getAllPosts] Found ${count} posts for category: ${categorySlug || 'ALL'}`);
@@ -124,33 +138,72 @@ export const getPostById = async (req: Request, res: Response) => {
     }
 };
 
-export const updatePost = async (req: Request, res: Response) => {
+export const getPostBySlug = async (req: Request, res: Response) => {
     try {
-        const { title, content, category_id, tags } = req.body;
+        const post = await Posts.findOne({
+            where: { slug: req.params.slug as string },
+            include: [
+                { model: Categories, attributes: ["id", "name", "slug"] },
+                { model: Tags, through: { attributes: [] }, attributes: ["id", "name"] },
+                { model: PostImages, as: "images", attributes: ["id", "image_url", "alt_text"] },
+            ],
+        });
+        if (!post) return res.status(404).json({ message: "Post not found" });
+        res.json(post);
+    } catch (error: any) {
+        res.status(500).json({ message: "Failed to fetch post by slug" });
+    }
+};
+
+export const updatePost = async (req: Request, res: Response) => {
+    const t = await db.transaction();
+    try {
+        const { title, slug, content, category_id, tags, images } = req.body;
 
         const post = await Posts.findByPk(req.params.id as string);
-        if (!post) return res.status(404).json({ message: "Post not found" });
+        if (!post) {
+            await t.rollback();
+            return res.status(404).json({ message: "Post not found" });
+        }
 
-        await post.update({ title, content, category_id });
+        await post.update({ title, slug, content, category_id }, { transaction: t });
 
-        if (tags) {
-            // Logic to resolve/findOrCreate tags and set them
-            // Simplified: explicit setTags if expected to be ids or objects, but logic in createPost
-            // handles names. Replicating logical consistency is key.
-            // For now assume names array like create:
-            if (Array.isArray(tags)) {
-                const tagInstances: Tags[] = [];
-                for (const tagName of tags) {
-                    const [tag] = await Tags.findOrCreate({ where: { name: tagName } });
-                    tagInstances.push(tag);
-                }
-                await post.setTags(tagInstances);
+        if (tags && Array.isArray(tags)) {
+            const tagInstances: Tags[] = [];
+            for (const tagName of tags) {
+                const [tag] = await Tags.findOrCreate({ 
+                    where: { name: tagName.toLowerCase() },
+                    defaults: {
+                        name: tagName.toLowerCase(),
+                        slug: tagName.toLowerCase().replace(/\s+/g, "-"),
+                    } as any,
+                    transaction: t 
+                });
+                tagInstances.push(tag);
+            }
+            await post.setTags(tagInstances, { transaction: t });
+        }
+
+        if (images) {
+            // Clear existing images and replace with new ones
+            await PostImages.destroy({ where: { post_id: post.id }, transaction: t });
+            
+            if (Array.isArray(images) && images.length > 0) {
+                const imageRecords = images.map((img: any) => ({
+                    post_id: post.id,
+                    image_url: img.url || img.image_url,
+                    alt_text: img.alt || img.alt_text || null,
+                }));
+                await PostImages.bulkCreate(imageRecords, { transaction: t });
             }
         }
 
+        await t.commit();
         res.json({ message: "Post updated successfully" });
     } catch (error: any) {
-        res.status(500).json({ message: "Failed to update post" });
+        await t.rollback();
+        console.error("❌ Error updatePost:", error);
+        res.status(500).json({ message: "Failed to update post", error: error.message });
     }
 };
 

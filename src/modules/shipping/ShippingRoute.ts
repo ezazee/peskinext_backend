@@ -6,16 +6,17 @@ const router = express.Router();
 /**
  * @swagger
  * tags:
- *   name: Shipping
- *   description: Shipping cost check
+ *   name: Order & Checkout
+ *   description: Proses pembelian dari keranjang hingga pembayaran dan pengiriman.
  */
 
 /**
  * @swagger
  * /shipping/check-ongkir:
  *   post:
- *     summary: Check Shipping Cost (RajaOngkir)
- *     tags: [Shipping]
+ *     summary: Cek Biaya Ongkir
+ *     description: Menghitung estimasi biaya pengiriman dari gudang ke alamat pelanggan menggunakan RajaOngkir.
+ *     tags: [Order & Checkout]
  *     requestBody:
  *       content:
  *         application/json:
@@ -23,11 +24,10 @@ const router = express.Router();
  *             type: object
  *             required: [user_id]
  *             properties:
- *               user_id:
- *                 type: integer
+ *               user_id: { type: string, description: "ID Pelanggan (UUID)" }
  *     responses:
  *       200:
- *         description: Shipping cost details
+ *         description: Detail biaya ongkir dari berbagai kurir (JNE, POS, TIKI).
  */
 router.post("/shipping/check-ongkir", ShippingController.checkOngkir);
 
@@ -35,28 +35,17 @@ router.post("/shipping/check-ongkir", ShippingController.checkOngkir);
  * @swagger
  * /shipping/webhook:
  *   post:
- *     summary: Handle Biteship Webhooks
- *     tags: [Shipping]
- *     description: Endpoint to receive order status updates from Biteship.
+ *     summary: Webhook Biteship
+ *     description: Endpoint otomatis untuk menerima update status pengiriman real-time dari Biteship (Sistem-ke-Sistem).
+ *     tags: [Order & Checkout]
  *     parameters:
  *       - in: header
  *         name: x-biteship-signature
- *         schema:
- *           type: string
- *         description: Signature for verification
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               event:
- *                 type: string
- *               payload:
- *                 type: object
+ *         schema: { type: string }
+ *         description: Tanda tangan keamanan untuk verifikasi data.
  *     responses:
  *       200:
- *         description: Webhook received successfully
+ *         description: Webhook diterima.
  */
 router.post("/shipping/webhook", ShippingController.handleWebhook);
 
@@ -64,18 +53,18 @@ router.post("/shipping/webhook", ShippingController.handleWebhook);
  * @swagger
  * /shipping/order/{id}:
  *   post:
- *     summary: Request Pickup (Create Biteship Order)
- *     tags: [Shipping]
+ *     summary: Request Pickup (Admin)
+ *     description: Memesan kurir penjemputan barang (Biteship) untuk pesanan tertentu.
+ *     tags: [Order & Checkout]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: string
- *         description: Order ID
+ *         schema: { type: string }
+ *         description: ID Pesanan.
  *     responses:
  *       200:
- *         description: Order created successfully
+ *         description: Order pengiriman berhasil dibuat.
  */
 router.post("/shipping/order/:id", ShippingController.createOrders);
 
@@ -83,18 +72,17 @@ router.post("/shipping/order/:id", ShippingController.createOrders);
  * @swagger
  * /shipping/tracking/{id}:
  *   get:
- *     summary: Get Order Tracking
- *     tags: [Shipping]
+ *     summary: Lacak Pengiriman
+ *     description: Mengambil status perjalanan paket secara real-time berdasarkan ID Pesanan.
+ *     tags: [Order & Checkout]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: string
- *         description: Order ID
+ *         schema: { type: string }
  *     responses:
  *       200:
- *         description: Tracking details
+ *         description: Detail status pelacakan paket.
  */
 router.get("/shipping/tracking/:id", ShippingController.getTracking);
 

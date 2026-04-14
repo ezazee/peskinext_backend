@@ -7,6 +7,7 @@ interface ProductVariantAttributes {
     product_id: string;
     variant_name: string;
     weight?: string;
+    sold_count?: number;
     created_at?: Date;
     updated_at?: Date;
 }
@@ -18,6 +19,7 @@ class ProductVariants extends Model<ProductVariantAttributes, ProductVariantCrea
     public product_id!: string;
     public variant_name!: string;
     public weight!: string;
+    public sold_count!: number;
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
 }
@@ -32,6 +34,7 @@ ProductVariants.init(
         product_id: { type: DataTypes.UUID, allowNull: false },
         variant_name: { type: DataTypes.STRING, allowNull: false },
         weight: { type: DataTypes.STRING, allowNull: true },
+        sold_count: { type: DataTypes.INTEGER, defaultValue: 0 },
     },
     {
         sequelize: db,

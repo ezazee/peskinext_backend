@@ -17,13 +17,12 @@ export const getAllBanners = async () => {
         section: b.section
     });
 
-    const main = banners.filter(b => b.section === "main").map(mapBanner);
-    const carousel = banners.filter(b => b.section === "carousel").map(mapBanner);
-    const tiles = banners.filter(b => b.section === "tiles").map(mapBanner);
-    const popup = banners.filter(b => b.section === "popup").map(mapBanner);
+    const main = banners.filter(b => b.section === "main" || b.section === "promo_desktop").map(mapBanner);
+    const carousel = banners.filter(b => b.section === "carousel" || b.section === "gallery_carousel").map(mapBanner);
+    const tiles = banners.filter(b => b.section === "tiles" || b.section === "gallery_single").map(mapBanner);
+    const popup = banners.filter(b => b.section === "popup" || b.section === "welcome").map(mapBanner);
     const welcome = banners.filter(b => b.section === "welcome").map(mapBanner);
 
-    // For specific events or special sections
     const promo_mobile = banners.filter(b => b.section === "promo_mobile").map(mapBanner);
     const promo_desktop = banners.filter(b => b.section === "promo_desktop").map(mapBanner);
     const bundle = banners.filter(b => b.section === "bundle").map(mapBanner);
@@ -46,4 +45,12 @@ export const getAllBanners = async () => {
 
 export const createBanner = async (data: any) => {
     return await Banners.create(data);
+};
+
+export const deleteBanner = async (id: number) => {
+    return await Banners.destroy({ where: { id } });
+};
+
+export const updateBanner = async (id: number, data: any) => {
+    return await Banners.update(data, { where: { id } });
 };

@@ -14,8 +14,13 @@ passport.use(
         },
         async (accessToken, refreshToken, profile, done) => {
             try {
-                // Check if user exists
-                let user = await User.findOne({ where: { email: profile.emails?.[0].value } });
+                // Check if user exists (Normalize email)
+                const googleEmail = profile.emails?.[0].value?.toLowerCase().trim();
+                if (!googleEmail) return done(new Error('No email found directly from Google'));
+
+                let user = await User.findOne({ 
+                    where: { email: googleEmail } 
+                });
 
                 if (user) {
                     // Update user with latest google info (fix for empty names/avatars)
@@ -35,6 +40,11 @@ passport.use(
                             user.images = avatar;
                         }
 
+                        user.is_google = true;
+                        await user.save();
+                    } else if (!user.is_google) {
+                        // User exists but is not marked as google user, mark them now
+                        user.is_google = true;
                         await user.save();
                     }
                     return done(null, user);
@@ -55,7 +65,7 @@ passport.use(
 
                     user = await User.create({
                         name: name,
-                        email: email,
+                        email: googleEmail,
                         password: randomPassword,
                         role: 'user',
                         images: avatar,

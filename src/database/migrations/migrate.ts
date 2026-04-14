@@ -9,6 +9,7 @@ import Address from "../../modules/user/models/AddressModel";
 import Coupons from "../../modules/coupon/models/CouponModel";
 import Users from "../../modules/user/models/UserModel";
 import Cart from "../../modules/cart/models/CartModel";
+import UsersCart from "../../modules/cart/models/CartModel";
 import Orders from "../../modules/order/models/OrderModel";
 import OrderItems from "../../modules/order/models/OrderItemModel";
 import OrderStatusHistory from "../../modules/order/models/OrderStatusHistoryModel";
@@ -26,6 +27,10 @@ import Districts from "../../modules/wilayah/models/DistrictModel";
 import Regencies from "../../modules/wilayah/models/RegencyModel";
 import Villages from "../../modules/wilayah/models/VillageModel";
 import Banners from "../../modules/banner/models/BannerModel";
+import GeneralSettings from "../../modules/setting/models/SettingModel";
+import FAQs from "../../modules/faq/models/FAQModel";
+import FlashSale from "../../modules/flash-sale/models/FlashSaleModel";
+import FlashSaleItems from "../../modules/flash-sale/models/FlashSaleItemModel";
 
 
 export const syncDB = async () => {
@@ -33,12 +38,19 @@ export const syncDB = async () => {
         // Order matters for constraints
         // DISABLED: db.sync runs on every restart and is very slow
         // Only enable this when you need to update database schema
-        await db.sync({ alter: true }); // Use alter instead of force to preserve data
+        // console.log("⚙️  Syncing database schema (please wait, do not stop)...");
+        // await db.sync({ alter: true }); // Use alter instead of force to preserve data
+        // console.log("✅ Database schema sync complete!");
+        // await db.sync({ alter: true });
 
 
         // Just test the connection instead
-        await db.authenticate();
-        console.log("✅ Database connected successfully");
+        const allUsers = await Users.findAll({ 
+            attributes: ['id', 'email', 'name', 'is_google'],
+            order: [['email', 'ASC']]
+        });
+        const fs = require('fs');
+        fs.writeFileSync("e:\\Data_Kerja\\PESkinPro\\code\\backend\\peskinext_backend\\users_dump.json", JSON.stringify(allUsers, null, 2));
     } catch (err) {
         console.error("❌ Database connection failed:", err);
     }

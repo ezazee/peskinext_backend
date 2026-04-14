@@ -2,11 +2,12 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Op } from "sequelize";
 import Users from "../user/models/UserModel";
+import RolePermissions from "../user/models/RolePermissionModel";
 import { ACCESS_SECRET, REFRESH_SECRET } from "../../config/env";
 import * as crypto from "crypto";
 import { sendForgotPasswordEmail } from "../../services/EmailService";
 
-const ADMIN_ROLES = new Set(["admin", "writter", "management"]);
+const ADMIN_ROLES = new Set(["admin", "super_admin", "writter", "management", "staff", "warehouse", "finance", "affiliate", "customer_service"]);
 
 export const signAccess = (user: Users, aud: string) => {
     return jwt.sign(
@@ -52,7 +53,7 @@ export const loginUser = async (emailOrPhone: string, password: string, isAdmin:
     // console.log("User found:", user.email, "Role:", role);
 
     if (isAdmin) {
-        if (!ADMIN_ROLES.has(role)) throw new Error("Access denied");
+        if (role === "user") throw new Error("Access denied");
     } else {
         if (role !== "user") throw new Error("Access denied");
     }
@@ -62,6 +63,10 @@ export const loginUser = async (emailOrPhone: string, password: string, isAdmin:
 
         throw new Error("Email atau password salah");
     }
+
+    // Fetch permissions for the role
+    const rolePerms = await RolePermissions.findByPk(user.role);
+    (user as any).permissions = rolePerms?.permissions || [];
 
     return user;
 };

@@ -6,16 +6,17 @@ const router = express.Router();
 /**
  * @swagger
  * tags:
- *   name: Transaction
- *   description: Payment and transaction management
+ *   name: Order & Checkout
+ *   description: Proses pembelian dari keranjang hingga pembayaran, pengiriman, dan riwayat transaksi.
  */
 
 /**
  * @swagger
  * /transactions/callback:
  *   post:
- *     summary: Handle Payment Callback (DOKU)
- *     tags: [Transaction]
+ *     summary: Callback Status Pembayaran (Sistem)
+ *     description: Endpoint otomatis yang dipanggil oleh Payment Gateway (DOKU/Midtrans) untuk memberitahu sistem bahwa pembayaran pelanggan sudah lunas atau kadaluarsa.
+ *     tags: [Order & Checkout]
  *     requestBody:
  *       required: true
  *       content:
@@ -26,16 +27,14 @@ const router = express.Router();
  *               order:
  *                 type: object
  *                 properties:
- *                   invoice_number:
- *                     type: string
+ *                   invoice_number: { type: string }
  *               transaction:
  *                 type: object
  *                 properties:
- *                   status:
- *                     type: string
+ *                   status: { type: string, description: "Status pembayaran (SUCCESS, FAILED, EXPIRED)" }
  *     responses:
  *       200:
- *         description: Callback processed
+ *         description: Data callback berhasil diproses oleh sistem.
  */
 router.post("/transactions/callback", TransactionController.handlePaymentCallback);
 
@@ -43,20 +42,20 @@ router.post("/transactions/callback", TransactionController.handlePaymentCallbac
  * @swagger
  * /transactions/{orderId}:
  *   get:
- *     summary: Get Transaction by Order ID
- *     tags: [Transaction]
+ *     summary: Cek Status Transaksi
+ *     description: Mengambil detail informasi transaksi pembayaran berdasarkan ID Pesanan.
+ *     tags: [Order & Checkout]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: orderId
  *         required: true
- *         schema:
- *           type: string
- *         description: Order UUID
+ *         schema: { type: string }
+ *         description: UUID Pesanan.
  *     responses:
  *       200:
- *         description: Transaction details
+ *         description: Detail transaksi ditemukan.
  */
 router.get("/transactions/:orderId", TransactionController.getTransaction);
 

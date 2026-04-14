@@ -9,14 +9,15 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: Auth
- *   description: Authentication management
+ *   description: Sistem masuk (login), daftar (register), dan keamanan akun.
  */
 
 /**
  * @swagger
  * /auth/admin/login:
  *   post:
- *     summary: Admin Login
+ *     summary: Login Admin
+ *     description: Digunakan oleh administrator untuk masuk ke Dashboard. Mengembalikan token akses (JWT).
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -28,13 +29,15 @@ const router = express.Router();
  *             properties:
  *               email:
  *                 type: string
+ *                 example: admin@peskinpro.id
  *               password:
  *                 type: string
+ *                 example: password123
  *     responses:
  *       200:
- *         description: Login successful
+ *         description: Login Berhasil. Mengembalikan data user dan token.
  *       401:
- *         description: Invalid credentials
+ *         description: Email atau kata sandi salah.
  */
 router.post("/admin/login", AuthController.adminLogin);
 
@@ -42,7 +45,8 @@ router.post("/admin/login", AuthController.adminLogin);
  * @swagger
  * /auth/user/login:
  *   post:
- *     summary: User Login
+ *     summary: Login Pelanggan
+ *     description: Digunakan oleh pembeli untuk masuk ke akun mereka di Storefront.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -54,11 +58,13 @@ router.post("/admin/login", AuthController.adminLogin);
  *             properties:
  *               email:
  *                 type: string
+ *                 example: customer@email.com
  *               password:
  *                 type: string
+ *                 example: password123
  *     responses:
  *       200:
- *         description: Login successful
+ *         description: Login Berhasil.
  */
 router.post("/user/login", AuthController.userLogin);
 
@@ -66,7 +72,8 @@ router.post("/user/login", AuthController.userLogin);
  * @swagger
  * /register:
  *   post:
- *     summary: Register user baru
+ *     summary: Daftar Akun Baru
+ *     description: Membuat akun pelanggan baru di sistem PESkinPro.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -88,9 +95,9 @@ router.post("/user/login", AuthController.userLogin);
  *                 type: string
  *     responses:
  *       201:
- *         description: Register successful
+ *         description: Pendaftaran berhasil.
  *       400:
- *         description: Validation error or User exists
+ *         description: Data tidak valid atau email sudah terdaftar.
  */
 router.post("/register", AuthController.register);
 
@@ -98,13 +105,14 @@ router.post("/register", AuthController.register);
  * @swagger
  * /token/refresh:
  *   post:
- *     summary: Refresh Access Token
+ *     summary: Perbarui Token (Refresh Token)
+ *     description: Memperbarui access token yang sudah kadaluarsa menggunakan refresh token yang tersimpan di cookie.
  *     tags: [Auth]
  *     responses:
  *       200:
- *         description: New access token generated
+ *         description: Token baru berhasil dibuat.
  *       403:
- *         description: Invalid or expired refresh token
+ *         description: Refresh token tidak valid atau sudah kadaluarsa.
  */
 router.post("/token/refresh", AuthController.refreshToken);
 
@@ -112,11 +120,12 @@ router.post("/token/refresh", AuthController.refreshToken);
  * @swagger
  * /admin/logout:
  *   post:
- *     summary: Admin Logout
+ *     summary: Keluar (Logout) Admin
+ *     description: Menghapus sesi admin dan membersihkan cookie authentication.
  *     tags: [Auth]
  *     responses:
  *       200:
- *         description: Logout successful
+ *         description: Logout berhasil.
  */
 router.post("/admin/logout", AuthController.adminLogout);
 
@@ -124,11 +133,12 @@ router.post("/admin/logout", AuthController.adminLogout);
  * @swagger
  * /user/logout:
  *   post:
- *     summary: User Logout
+ *     summary: Keluar (Logout) Pelanggan
+ *     description: Menghapus sesi pelanggan dan membersihkan cookie authentication.
  *     tags: [Auth]
  *     responses:
  *       200:
- *         description: Logout successful
+ *         description: Logout berhasil.
  */
 router.post("/user/logout", AuthController.userLogout);
 
@@ -136,31 +146,30 @@ router.post("/user/logout", AuthController.userLogout);
  * @swagger
  * /admin/me:
  *   get:
- *     summary: Get Current Admin Profile
+ *     summary: Ambil Profil Saya (Admin)
+ *     description: Mengambil data profil administrator yang sedang login saat ini.
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Admin profile data
+ *         description: Data profil admin berhasil diambil.
  *       401:
- *         description: Unauthorized
+ *         description: Sesi berakhir atau tidak memiliki ijin.
  */
 router.get("/admin/me", requireAdminAuth(), AuthController.getMe);
-
-// router.get("/user/me", requireUserAuth(), AuthController.getMe); // MOVED TO UserRoute
 
 // Google OAuth
 /**
  * @swagger
  * /auth/google:
  *   get:
- *     summary: Initiate Google OAuth Login
+ *     summary: Login dengan Google
+ *     description: Mengarahkan pengguna ke halaman login Google untuk otentikasi.
  *     tags: [Auth]
- *     description: Redirects user to Google Login page.
  *     responses:
  *       302:
- *         description: Redirects to Google
+ *         description: Redirect ke Google.
  */
 router.get(
     "/auth/google",
@@ -171,14 +180,12 @@ router.get(
  * @swagger
  * /auth/google/callback:
  *   get:
- *     summary: Google OAuth Callback
+ *     summary: Callback Google OAuth
+ *     description: Menangani kembalian dari Google setelah pengguna login. Menghasilkan token dan mengarahkan kembali ke website.
  *     tags: [Auth]
- *     description: Handles the return from Google, generates tokens, and redirects to frontend.
  *     responses:
  *       302:
- *         description: Redirects to Frontend with token
- *       401:
- *         description: Authentication failed
+ *         description: Kembali ke website dengan membawa token.
  */
 router.get(
     "/auth/google/callback",
@@ -190,7 +197,8 @@ router.get(
  * @swagger
  * /auth/forgot-password:
  *   post:
- *     summary: Request Forgot Password Email
+ *     summary: Minta Reset Kata Sandi
+ *     description: Mengirimkan email berisi link reset kata sandi ke alamat email pengguna.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -204,7 +212,7 @@ router.get(
  *                 type: string
  *     responses:
  *       200:
- *         description: Email sent
+ *         description: Email reset berhasil dikirim.
  */
 router.post("/forgot-password", AuthController.forgotPassword);
 
@@ -212,7 +220,8 @@ router.post("/forgot-password", AuthController.forgotPassword);
  * @swagger
  * /auth/reset-password:
  *   post:
- *     summary: Reset Password with Token
+ *     summary: Reset Kata Sandi Baru
+ *     description: Mengubah kata sandi lama menjadi baru menggunakan token yang didapat dari email.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -228,7 +237,7 @@ router.post("/forgot-password", AuthController.forgotPassword);
  *                 type: string
  *     responses:
  *       200:
- *         description: Password reset successful
+ *         description: Kata sandi berhasil diubah.
  */
 router.post("/reset-password", AuthController.resetPassword);
 

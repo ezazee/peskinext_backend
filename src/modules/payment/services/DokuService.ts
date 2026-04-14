@@ -1,14 +1,29 @@
 import crypto from 'crypto';
 
+/**
+ * Helper to get DOKU keys directly from Environment Variables for maximum security.
+ */
+function getDokuEnvConfig() {
+    const isProduction = process.env.DOKU_MODE === 'production';
+    
+    let clientId, secretKey, apiUrl;
 
-const DOKU_API_URL = process.env.DOKU_API_URL || "https://api-sandbox.doku.com";
-const CLIENT_ID = process.env.SANDBOX_DOKU_CLIENT_ID || process.env.DOKU_CLIENT_ID;
-const SECRET_KEY = process.env.SANDBOX_DOKU_SECRET_KEY || process.env.DOKU_SECRET_KEY;
+    if (isProduction) {
+        apiUrl = process.env.LIVE_DOKU_BASE_URL || "https://api.doku.com";
+        clientId = process.env.LIVE_DOKU_CLIENT_ID;
+        secretKey = process.env.LIVE_DOKU_SECRET_KEY;
+    } else {
+        apiUrl = process.env.SANDBOX_DOKU_BASE_URL || "https://api-sandbox.doku.com";
+        clientId = process.env.SANDBOX_DOKU_CLIENT_ID;
+        secretKey = process.env.SANDBOX_DOKU_SECRET_KEY;
+    }
 
-if (!CLIENT_ID || !SECRET_KEY) {
-    console.warn("⚠️ DOKU_CLIENT_ID or DOKU_SECRET_KEY is missing in environment variables.");
-} else {
-
+    return {
+        apiUrl,
+        clientId,
+        secretKey,
+        isProduction
+    };
 }
 
 interface PaymentRequest {
@@ -25,10 +40,10 @@ interface PaymentRequest {
     payment: {
         payment_due_date: number;
         notification_url?: string;
+        payment_method_types?: string[];
     };
 }
 
-// Helper for retry
 async function fetchWithRetry(url: string, options: any, retries = 3) {
     for (let i = 0; i < retries; i++) {
         try {
@@ -37,7 +52,6 @@ async function fetchWithRetry(url: string, options: any, retries = 3) {
         } catch (err: any) {
             console.warn(`⚠️ DOKU Fetch Attempt ${i + 1} failed: ${err.message}`);
             if (i === retries - 1) throw err;
-            // Wait 1s before retry
             await new Promise(r => setTimeout(r, 1000));
         }
     }
@@ -50,6 +64,12 @@ export const generatePaymentUrl = async (
     customerData: { name: string; email: string; phone?: string }
 ): Promise<string> => {
     try {
+        const { apiUrl, clientId, secretKey } = getDokuEnvConfig();
+        
+        if (!clientId || !secretKey) {
+            throw new Error("DOKU Configuration missing in .env (CLIENT_ID or SECRET_KEY)");
+        }
+
         const requestId = `REQ-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         const requestTimestamp = new Date().toISOString().slice(0, 19) + "Z";
         const targetPath = "/checkout/v1/payment";
@@ -66,34 +86,24 @@ export const generatePaymentUrl = async (
                 phone: customerData.phone
             },
             payment: {
-                payment_due_date: 30, // 30 minutes
-                // Explicit notification URL as requested
+                payment_due_date: 60, // 60 minutes
                 notification_url: "https://peskinext-backend.vercel.app/api/v1/payment/notification"
             }
         };
 
         const jsonBody = JSON.stringify(payload);
-
-        // Calculate Signature
-        // Component 1: Digest = BASE64(SHA256(Body))
         const digest = crypto.createHash('sha256').update(jsonBody).digest('base64');
+        const rawSignature = `Client-Id:${clientId}\nRequest-Id:${requestId}\nRequest-Timestamp:${requestTimestamp}\nRequest-Target:${targetPath}\nDigest:${digest}`;
 
-        // Component 2: Signature String
-        // Client-Id + \n + Request-Id + \n + Request-Timestamp + \n + Request-Target + \n + Digest
-        const rawSignature = `Client-Id:${CLIENT_ID}\nRequest-Id:${requestId}\nRequest-Timestamp:${requestTimestamp}\nRequest-Target:${targetPath}\nDigest:${digest}`;
-
-        const hmac = crypto.createHmac('sha256', SECRET_KEY || '');
+        const hmac = crypto.createHmac('sha256', secretKey);
         hmac.update(rawSignature);
         const signature = `HMACSHA256=${hmac.digest('base64')}`;
 
-
-
-        // Use Retry
-        const response = await fetchWithRetry(`${DOKU_API_URL}${targetPath}`, {
+        const response = await fetchWithRetry(`${apiUrl}${targetPath}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Client-Id': CLIENT_ID || '',
+                'Client-Id': clientId,
                 'Request-Id': requestId,
                 'Request-Timestamp': requestTimestamp,
                 'Signature': signature,
@@ -117,36 +127,26 @@ export const generatePaymentUrl = async (
     }
 };
 
-export const verifySignature = (headers: any, body: string): boolean => {
-    // Basic verification logic for notification (if needed later)
-    return true;
-};
-
 export const checkTransactionStatus = async (invoiceNumber: string): Promise<string | null> => {
     try {
+        const { apiUrl, clientId, secretKey } = getDokuEnvConfig();
+        if (!clientId || !secretKey) return null;
+
         const requestId = `REQ-STATUS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         const requestTimestamp = new Date().toISOString().slice(0, 19) + "Z";
-
-        // Revert to Orders API (Correct Endpoint, just Auth failed)
         const targetPath = `/orders/v1/status/${invoiceNumber}`;
-
-        // Digest for empty body (Standard SHA256 of empty string)
         const digest = "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=";
+        const rawSignature = `Client-Id:${clientId}\nRequest-Id:${requestId}\nRequest-Timestamp:${requestTimestamp}\nRequest-Target:${targetPath}`;
 
-        // For GET Request, Doku requires Digest in Header but EXCLUDES it from Raw Signature
-        const rawSignature = `Client-Id:${CLIENT_ID}\nRequest-Id:${requestId}\nRequest-Timestamp:${requestTimestamp}\nRequest-Target:${targetPath}`;
-
-        const hmac = crypto.createHmac('sha256', SECRET_KEY || '');
+        const hmac = crypto.createHmac('sha256', secretKey);
         hmac.update(rawSignature);
         const signature = `HMACSHA256=${hmac.digest('base64')}`;
 
-
-
-        const response = await fetch(`${DOKU_API_URL}${targetPath}`, {
+        const response = await fetch(`${apiUrl}${targetPath}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Client-Id': CLIENT_ID || '',
+                'Client-Id': clientId,
                 'Request-Id': requestId,
                 'Request-Timestamp': requestTimestamp,
                 'Signature': signature,
@@ -155,16 +155,16 @@ export const checkTransactionStatus = async (invoiceNumber: string): Promise<str
         });
 
         const data = await response.json() as any;
-
-
         if (response.ok && data.transaction?.status) {
-            return data.transaction.status; // "SUCCESS", "FAILED", "PENDING"
+            return data.transaction.status;
         }
-
         return null;
-
     } catch (error: any) {
         console.error("❌ Error checking transaction status:", error);
-        return null; // Don't throw, just return null so we don't break the UI
+        return null;
     }
+};
+
+export const verifySignature = (headers: any, body: string): boolean => {
+    return true;
 };

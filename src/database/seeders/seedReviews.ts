@@ -36,13 +36,37 @@ const reviewsData = [
     { email: "budi.santoso@example.com", slug: "pe-prebiotic-pore-ex-facial-pad", variant: "60 pads", rating: 5, comment: "Praktis buat eksfoliasi mingguan.", date: "2023-04-05T10:10:00Z" },
 
     // Glow Serum
-    { email: "dewi.lestari@example.com", slug: "skin-awakening-glow-serum", variant: "15ml", rating: 5, comment: "Beneran bikin glowing dong dalam 2 minggu.", date: "2023-05-01T20:00:00Z" },
-    { email: "siti.aminah@example.com", slug: "skin-awakening-glow-serum", variant: "30ml", rating: 4, comment: "Lumayan mencerahkan bekas jerawat.", date: "2023-05-10T11:55:00Z" },
+    { 
+        email: "dewi.lestari@example.com", 
+        slug: "skin-awakening-glow-serum", 
+        variant: "15ml", 
+        rating: 5, 
+        comment: "Beneran bikin glowing dong dalam 2 minggu. Teksturnya enak banget!", 
+        date: "2023-05-01T20:00:00Z",
+        images: ["https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1000&auto=format&fit=crop", "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1000&auto=format&fit=crop"]
+    },
+    { 
+        email: "siti.aminah@example.com", 
+        slug: "skin-awakening-glow-serum", 
+        variant: "30ml", 
+        rating: 4, 
+        comment: "Lumayan mencerahkan bekas jerawat. Ini video unboxing-nya ya min!", 
+        date: "2023-05-10T11:55:00Z",
+        images: ["https://cdn.pixabay.com/vimeo/328940142/beauty-22165.mp4?width=1280&hash=856e7e59f2c6a0b8f4ed8f9037c8a6f4"] // Sample video extension
+    },
     { email: "sosiotech123@gmail.com", slug: "skin-awakening-glow-serum", variant: "15ml", rating: 5, comment: "Teksturnya ringan, ga lengket.", date: "2023-05-15T08:40:00Z" },
 
     // Hydro Cream
     { email: "rina.kartika@example.com", slug: "hydro-restorative-cream", variant: "30g", rating: 5, comment: "Lembap banget dipake malem, paginya kenyal.", date: "2023-06-01T21:30:00Z" },
-    { email: "budi.santoso@example.com", slug: "hydro-restorative-cream", variant: "60g", rating: 5, comment: "Sleeping mask andalan.", date: "2023-06-05T22:15:00Z" },
+    { 
+        email: "budi.santoso@example.com", 
+        slug: "hydro-restorative-cream", 
+        variant: "60g", 
+        rating: 5, 
+        comment: "Sleeping mask andalan. Packagingnya mewah banget!", 
+        date: "2023-06-05T22:15:00Z",
+        images: ["https://images.unsplash.com/photo-1594465919760-441fe5908ab0?q=80&w=1000&auto=format&fit=crop"]
+    },
 
     // Bundles
     { email: "dewi.lestari@example.com", slug: "paket-basic-glow-honey-cleanser-toner", variant: "Small Set", rating: 5, comment: "Paket hemat yang pas buat pemula.", date: "2023-07-01T09:00:00Z" },
@@ -111,7 +135,7 @@ export const seedReviews = async () => {
                         variant_id: variantId,
                         rating: r.rating,
                         comment: r.comment,
-                        images: JSON.stringify([]), // Dummy empty images for now
+                        images: JSON.stringify((r as any).images || []), 
                         created_at: new Date(r.date)
                     } as any);
                 } catch (err) {

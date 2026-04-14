@@ -6,19 +6,20 @@ const router = express.Router();
 /**
  * @swagger
  * tags:
- *   name: Banner
- *   description: Banner management for Carousel and Tiles
+ *   name: Content & Support
+ *   description: Artikel blog, FAQ, Banner, Data Wilayah, Notifikasi, dan Pengaturan Sistem.
  */
 
 /**
  * @swagger
  * /banners:
  *   get:
- *     summary: Get All Banners
- *     tags: [Banner]
+ *     summary: Ambil Semua Banner Storefront
+ *     description: Mengambil daftar semua banner aktif yang dikelompokkan berdasarkan bagian (Main Hero, Carousel, dan Tiles).
+ *     tags: [Content & Support]
  *     responses:
  *       200:
- *         description: List of banners grouped by section (carousel/tiles)
+ *         description: Daftar banner berhasil diambil.
  *         content:
  *           application/json:
  *             schema:
@@ -29,42 +30,19 @@ const router = express.Router();
  *                   items:
  *                     type: object
  *                     properties:
- *                       id:
- *                         type: integer
- *                       src:
- *                         type: string
- *                       mobileSrc:
- *                         type: string
- *                       alt:
- *                         type: string
- *                       redirect:
- *                         type: string
+ *                       id: { type: integer }
+ *                       src: { type: string, description: "URL Gambar Desktop" }
+ *                       mobileSrc: { type: string, description: "URL Gambar Mobile" }
+ *                       alt: { type: string }
+ *                       redirect: { type: string }
  *                 carousel:
  *                   type: array
  *                   items:
  *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       src:
- *                         type: string
- *                       alt:
- *                         type: string
- *                       redirect:
- *                         type: string
  *                 tiles:
  *                   type: array
  *                   items:
  *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       src:
- *                         type: string
- *                       alt:
- *                         type: string
- *                       redirect:
- *                         type: string
  */
 router.get("/banners", BannerController.getBanners);
 
@@ -72,8 +50,11 @@ router.get("/banners", BannerController.getBanners);
  * @swagger
  * /banners:
  *   post:
- *     summary: Create New Banner
- *     tags: [Banner]
+ *     summary: Buat Banner Baru (Admin)
+ *     description: Administrator menambahkan gambar banner baru untuk promosi di halaman depan.
+ *     tags: [Content & Support]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -85,21 +66,48 @@ router.get("/banners", BannerController.getBanners);
  *               section:
  *                 type: string
  *                 enum: [main, carousel, tiles]
- *               image_url:
- *                 type: string
- *               alt_text:
- *                 type: string
- *               sort_order:
- *                 type: integer
- *               redirect_url:
- *                 type: string
- *               is_active:
- *                 type: boolean
+ *               image_url: { type: string }
+ *               alt_text: { type: string }
+ *               sort_order: { type: integer }
+ *               redirect_url: { type: string, description: "Link tujuan saat banner diklik." }
+ *               is_active: { type: boolean }
  *     responses:
  *       201:
- *         description: Banner created
+ *         description: Banner berhasil dibuat.
  */
-router.post("/banners", BannerController.createBanner); // Admin only in future
+router.post("/banners", BannerController.createBanner);
+
+/**
+ * @swagger
+ * /banners/{id}:
+ *   delete:
+ *     summary: Hapus Banner (Admin)
+ *     description: Menghapus banner tertentu dari website.
+ *     tags: [Content & Support]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Banner berhasil dihapus.
+ */
+router.delete("/banners/:id", BannerController.deleteBanner);
+
+/**
+ * @swagger
+ * /banners/seed-popup:
+ *   get:
+ *     summary: Inisialisasi Banner Popup (Testing)
+ *     description: Menambahkan data banner popup percobaan ke dalam sistem.
+ *     tags: [Content & Support]
+ *     responses:
+ *       200:
+ *         description: Data popup berhasil di-seed.
+ */
 router.get("/banners/seed-popup", BannerController.seedPopup);
 
 export default router;

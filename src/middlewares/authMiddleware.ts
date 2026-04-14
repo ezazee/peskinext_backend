@@ -55,8 +55,59 @@ export const requireAccess = (audExpected?: string, rolesAllowed?: string[]) => 
     };
 };
 
-export const requireAdminAuth = (roles: string[] = ["admin", "writter", "management"]) =>
-    requireAccess("admin", roles);
+export const requireAdminAuth = () => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const header = req.headers.authorization || "";
+            let token = header.startsWith("Bearer ") ? header.slice(7) : null;
+
+            if (!token && req.cookies?.session_token) {
+                const parts = req.cookies.session_token.split(':');
+                if (parts.length >= 3) token = parts.slice(2).join(':');
+            }
+
+            if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+            const payload = jwt.verify(token, ACCESS_SECRET) as any;
+            
+            // Allow any role EXCEPT 'user' for admin dashboard API
+            const role = String(payload.role || "").toLowerCase();
+            if (role === "user" || payload.aud !== "admin") {
+                return res.status(403).json({ message: "Forbidden" });
+            }
+
+            req.user = payload;
+            next();
+        } catch (_) {
+            return res.status(401).json({ message: "Token invalid/expired" });
+        }
+    };
+};
 
 export const requireUserAuth = () =>
     requireAccess("user", ["user"]);
+
+/**
+ * requireAuth - Allows ANY valid authenticated user (Admin or Customer)
+ */
+export function requireAuth() {
+    return (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const header = req.headers.authorization || "";
+            let token = header.startsWith("Bearer ") ? header.slice(7) : null;
+
+            if (!token && req.cookies?.session_token) {
+                const parts = req.cookies.session_token.split(':');
+                if (parts.length >= 3) token = parts.slice(2).join(':');
+            }
+
+            if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+            const payload = jwt.verify(token, ACCESS_SECRET) as any;
+            req.user = payload;
+            next();
+        } catch (_) {
+            return res.status(401).json({ message: "Token invalid/expired" });
+        }
+    };
+}

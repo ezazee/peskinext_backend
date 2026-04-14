@@ -5,7 +5,7 @@ import Banners from "./models/BannerModel";
 export const getBanners = async (req: Request, res: Response) => {
     try {
         const banners = await BannerService.getAllBanners();
-        res.json(banners);
+        res.json({ success: true, data: banners });
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }
@@ -37,6 +37,15 @@ export const seedPopup = async (req: Request, res: Response) => {
         });
 
         res.status(201).json({ message: "Popup seeded", data: banner });
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+};
+export const deleteBanner = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        await BannerService.deleteBanner(Number(id));
+        res.json({ message: "Banner deleted successfully" });
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }

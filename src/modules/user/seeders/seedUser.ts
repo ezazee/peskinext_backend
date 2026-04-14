@@ -10,52 +10,34 @@ const seedUsers = async () => {
         // Ensure table exists
         await Users.sync({ alter: true });
 
-        // Admin User
-        const adminEmail = "admin@example.com";
-        const adminExists = await Users.findOne({ where: { email: adminEmail } });
+        const defaultPassword = "password123";
+        const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
-        if (!adminExists) {
-            const hashedPassword = await bcrypt.hash("password123", 10);
+        const email = "superadmin@peskinpro.id";
+        const name = "Super Admin Utama";
+
+        const exists = await Users.findOne({ where: { email } });
+        if (!exists) {
             await Users.create({
-                name: "Admin User",
-                email: adminEmail,
+                name: name,
+                email: email,
                 password: hashedPassword,
-                role: "admin",
+                role: "super_admin",
                 status: "active",
                 email_verified_at: new Date(),
-                no_telp: "081234567890",
-                firstName: "Admin",
-                lastName: "User",
-                slug: "admin-user",
+                firstName: "Super",
+                lastName: "Admin",
+                slug: "super-admin-utama",
                 is_google: false
             });
-            console.log("✅ Admin user created: admin@example.com / password123");
+            console.log(`✅ Created Super Admin: ${email} / ${defaultPassword}`);
         } else {
-            console.log("⚠️ Admin user already exists.");
-        }
-
-        // Regular User
-        const userEmail = "user@example.com";
-        const userExists = await Users.findOne({ where: { email: userEmail } });
-
-        if (!userExists) {
-            const hashedPassword = await bcrypt.hash("password123", 10);
-            await Users.create({
-                name: "Regular User",
-                email: userEmail,
-                password: hashedPassword,
-                role: "user",
-                status: "active",
-                email_verified_at: new Date(),
-                no_telp: "089876543210",
-                firstName: "Regular",
-                lastName: "User",
-                slug: "regular-user",
-                is_google: false
-            });
-            console.log("✅ Regular user created: user@example.com / password123");
-        } else {
-            console.log("⚠️ Regular user already exists.");
+            exists.password = hashedPassword;
+            exists.name = name;
+            exists.role = "super_admin";
+            exists.status = "active";
+            await exists.save();
+            console.log(`✅ Updated Super Admin credentials: ${email} / ${defaultPassword}`);
         }
 
         process.exit(0);

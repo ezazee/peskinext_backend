@@ -6,65 +6,66 @@ const router = express.Router();
 /**
  * @swagger
  * tags:
- *   name: Article
- *   description: Article management (Posts, Categories, Tags)
+ *   name: Content & Support
+ *   description: Artikel blog, FAQ, Banner, Data Wilayah, dan Pengaturan Sistem.
  */
-
-/**
- * @swagger
- * /categories:
- *   post:
- *     summary: Create Article Category
- *     tags: [Article]
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *     responses:
- *       201:
- *         description: Category created
- */
-router.post("/categories", CategoryController.createCategory);
 
 /**
  * @swagger
  * /categories:
  *   get:
- *     summary: Get All Article Categories
- *     tags: [Article]
+ *     summary: Ambil Semua Kategori Artikel
+ *     description: "Mengambil daftar semua kategori blog yang tersedia (misal: Skincare, Lifestyle, Promo)."
+ *     tags: [Content & Support]
  *     responses:
  *       200:
- *         description: List of categories
+ *         description: Daftar kategori berhasil diambil.
  */
 router.get("/categories", CategoryController.getCategories);
 
 /**
  * @swagger
+ * /categories:
+ *   post:
+ *     summary: Buat Kategori Baru (Admin)
+ *     description: Menambahkan kategori artikel blog baru ke dalam sistem.
+ *     tags: [Content & Support]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name]
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Tips Kecantikan"
+ *     responses:
+ *       201:
+ *         description: Kategori berhasil dibuat.
+ */
+router.post("/categories", CategoryController.createCategory);
+
+/**
+ * @swagger
  * /categories/{id}:
  *   patch:
- *     summary: Update Article Category
- *     tags: [Article]
+ *     summary: Perbarui Kategori (Admin)
+ *     description: Mengubah nama kategori artikel yang sudah ada.
+ *     tags: [Content & Support]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: integer
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
  *     responses:
  *       200:
- *         description: Category updated
+ *         description: Kategori berhasil diperbarui.
  */
 router.patch("/categories/:id", CategoryController.updateCategory);
 
@@ -72,8 +73,11 @@ router.patch("/categories/:id", CategoryController.updateCategory);
  * @swagger
  * /categories/{id}:
  *   delete:
- *     summary: Delete Article Category
- *     tags: [Article]
+ *     summary: Hapus Kategori (Admin)
+ *     description: Menghapus kategori artikel blog. Pastikan tidak ada artikel yang terhubung ke kategori ini sebelum menghapus.
+ *     tags: [Content & Support]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -82,7 +86,7 @@ router.patch("/categories/:id", CategoryController.updateCategory);
  *           type: integer
  *     responses:
  *       200:
- *         description: Category deleted
+ *         description: Kategori berhasil dihapus.
  */
 router.delete("/categories/:id", CategoryController.deleteCategory);
 

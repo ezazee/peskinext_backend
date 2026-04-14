@@ -1,0 +1,86 @@
+[
+  {
+    "id": "c7b51566-1f4d-4626-8525-4495fa324d3e",
+    "email": "adm.peskinproid@gmail.com",
+    "name": "Admin PE skinproid",
+    "is_google": true
+  },
+  {
+    "id": "b7aee722-946b-4609-9fa9-ba24db8d7f01",
+    "email": "budi.santoso@example.com",
+    "name": "Budi Santoso",
+    "is_google": false
+  },
+  {
+    "id": "4a87869a-0b27-4470-b8a1-b8ee2032b4e9",
+    "email": "dewi.lestari@example.com",
+    "name": "Dewi Lestari",
+    "is_google": false
+  },
+  {
+    "id": "2ddc9bc4-2c85-4f33-b541-80b796c2e658",
+    "email": "dimaskbn@peskinpro.id",
+    "name": "Dimas",
+    "is_google": false
+  },
+  {
+    "id": "c2ef0ccf-3745-482a-a715-34e80e1ac081",
+    "email": "nexoriacreative@gmail.com",
+    "name": "nexoria creative",
+    "is_google": true
+  },
+  {
+    "id": "f9d89413-e6f1-4d1c-bb31-601140e5c915",
+    "email": "rezzaaf12@gmail.com",
+    "name": "eza af",
+    "is_google": true
+  },
+  {
+    "id": "a6fd16a7-8b78-4505-804b-e84f829a1477",
+    "email": "rezzarap24@gmail.com",
+    "name": "ageng",
+    "is_google": true
+  },
+  {
+    "id": "e88450e1-ed08-4921-a7d0-3f0be082c2ff",
+    "email": "rina.kartika@example.com",
+    "name": "Rina Kartika",
+    "is_google": false
+  },
+  {
+    "id": "f7b4e481-0b17-4866-8d95-556d61b50e03",
+    "email": "siti.aminah@example.com",
+    "name": "Siti Aminah",
+    "is_google": false
+  },
+  {
+    "id": "94637ec8-5935-4937-bbe3-eeaa8799e5bf",
+    "email": "sosiotech123@gmail.com",
+    "name": "Sosiotech Demo",
+    "is_google": false
+  },
+  {
+    "id": "b2f82cec-54ba-4c87-9e1b-5bf75f3af5aa",
+    "email": "superadmin@peskinpro.id",
+    "name": "Super Admin Utama",
+    "is_google": false
+  },
+  {
+    "id": "d669a3e3-f7e6-4de6-88db-760e76c81dc8",
+    "email": "tanti.sagitta@gmail.com",
+    "name": "Tanti Sagitta",
+    "is_google": true
+  },
+  {
+    "id": "dd687d6c-f18c-4487-92d7-c5f738646c5c",
+    "email": "user@example.com",
+    "name": "Regular User",
+    "is_google": false
+  },
+  {
+    "id": "e62dd91c-c2be-45bb-9ad3-e5dfaaecb84b",
+    "email": "yukiirima123@gmail.com",
+    "name": "Reza",
+    "is_google": true
+  }
+]

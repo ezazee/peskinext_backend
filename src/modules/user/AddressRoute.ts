@@ -6,89 +6,115 @@ const router = express.Router();
 /**
  * @swagger
  * tags:
- *   name: Address
- *   description: Address management
+ *   name: User - Customer
+ *   description: Pengelolaan profil pelanggan dan alamat pengiriman.
  */
 
 /**
  * @swagger
- * /addres:
+ * /address:
  *   post:
- *     summary: Create New Address
- *     tags: [Address]
+ *     summary: Tambah Alamat Baru
+ *     description: Menyimpan alamat pengiriman baru untuk pelanggan.
+ *     tags: [User - Customer]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [recipient_name, phone_number, address_line, province_id, city_id, district_id]
  *             properties:
- *               user_id:
+ *               recipient_name:
+ *                 type: string
+ *                 example: "Budi Santoso"
+ *               phone_number:
+ *                 type: string
+ *                 example: "08123456789"
+ *               address_line:
+ *                 type: string
+ *                 description: Detail alamat (Jalan, No Rumah).
+ *               province_id:
  *                 type: integer
+ *               city_id:
+ *                 type: integer
+ *               district_id:
+ *                 type: integer
+ *               postal_code:
+ *                 type: string
+ *               is_default:
+ *                 type: boolean
+ *     responses:
+ *       201:
+ *         description: Alamat berhasil ditambahkan.
+ */
+router.post("/address", AddressController.createAddress);
+
+/**
+ * @swagger
+ * /addresses/{user_id}:
+ *   get:
+ *     summary: Daftar Alamat Pelanggan
+ *     description: Mengambil semua daftar alamat yang dimiliki oleh seorang pengguna berdasarkan ID-nya.
+ *     tags: [User - Customer]
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: UUID pengguna.
+ *     responses:
+ *       200:
+ *         description: Daftar alamat berhasil ditemukan.
+ */
+router.get("/addresses/:user_id", AddressController.getAddresses);
+
+/**
+ * @swagger
+ * /address/{id}:
+ *   put:
+ *     summary: Perbarui Alamat
+ *     description: Mengubah detail informasi pada alamat yang sudah ada.
+ *     tags: [User - Customer]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID unik alamat.
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
  *               recipient_name:
  *                 type: string
  *               phone_number:
  *                 type: string
  *               address_line:
  *                 type: string
- *     responses:
- *       201:
- *         description: Address created
- */
-router.post("/address", AddressController.createAddress);
-
-/**
- * @swagger
- * /addres/{user_id}:
- *   get:
- *     summary: Get Addresses by User ID
- *     tags: [Address]
- *     parameters:
- *       - in: path
- *         name: user_id
- *         required: true
- *         schema:
- *           type: integer
+ *               province_id:
+ *                 type: integer
+ *               city_id:
+ *                 type: integer
+ *               district_id:
+ *                 type: integer
  *     responses:
  *       200:
- *         description: List of addresses
- */
-router.get("/addresses/:user_id", AddressController.getAddresses);
-
-/**
- * @swagger
- * /addres/{id}:
- *   patch:
- *     summary: Update Address
- *     tags: [Address]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               recipient_name:
- *                 type: string
- *               address_line:
- *                 type: string
- *     responses:
- *       200:
- *         description: Address updated
+ *         description: Alamat berhasil diperbarui.
  */
 router.put("/address/:id", AddressController.updateAddress);
 
 /**
  * @swagger
- * /addres/{id}:
+ * /address/{id}:
  *   delete:
- *     summary: Delete Address
- *     tags: [Address]
+ *     summary: Hapus Alamat
+ *     description: Menghapus alamat pengiriman dari daftar pelanggan.
+ *     tags: [User - Customer]
  *     parameters:
  *       - in: path
  *         name: id
@@ -97,33 +123,26 @@ router.put("/address/:id", AddressController.updateAddress);
  *           type: integer
  *     responses:
  *       200:
- *         description: Address deleted
+ *         description: Alamat berhasil dihapus.
  */
 router.delete("/address/:id", AddressController.deleteAddress);
 
 /**
  * @swagger
- * /addres/{id}/set-default:
- *   patch:
- *     summary: Set Address as Default
- *     tags: [Address]
+ * /address/{id}/default:
+ *   put:
+ *     summary: Setel Alamat Utama
+ *     description: Menjadikan salah satu alamat sebagai alamat pengiriman utama (default).
+ *     tags: [User - Customer]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: integer
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               user_id:
- *                 type: integer
  *     responses:
  *       200:
- *         description: Address set as default
+ *         description: Alamat berhasil disetel sebagai utama.
  */
 router.put("/address/:id/default", AddressController.setDefaultAddress);
 

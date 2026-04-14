@@ -44,40 +44,89 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
 
         if (event === "order.status") {
-            const { id, status } = req.body.payload;
-            // Biteship order ID might technically be different from our internal Order ID depending on integration.
-            // Assuming we stored Biteship ID or we are using our ID as external ID.
-            // If `id` in payload corresponds to our `Orders.id` via external_id mapping.
-            // Let's assume for this MVP that the payload contains reference to our order or we find via tracking.
-
-            // If the payload has `external_id` (which we usually send as our Order ID)
+            const { id, status, courier, waybill_id } = req.body.payload;
             const externalId = req.body.payload.external_id;
 
             if (externalId) {
                 const order = await Orders.findByPk(externalId);
                 if (order) {
-                    // Map Biteship status to our status
-                    // Biteship: placed, confirmed, allocated, picking, picking_ended, picked, dropping_off, return_in_transit, return_to_seller, delivered, cancelled, rejected, courier_not_found, returned, on_hold, on_hold_courier, on_hold_seller, on_hold_buyer, on_hold_system
-                    // Our: "pending", "processing", "shipped", "delivered", "cancelled"
-
+                    const previousStatus = order.status;
                     let newStatus: any = order.status;
+                    let statusNote = "";
 
-                    if (status === "confirmed" || status === "allocated" || status === "picking" || status === "picked") {
+                    // Fetch Automation Settings from Database
+                    const GeneralSettings = require("../setting/models/SettingModel").default;
+                    const settings = await GeneralSettings.findAll({ where: { group: 'shipping' } });
+                    const configMap = settings.reduce((acc: any, curr: any) => {
+                        acc[curr.key] = curr.value;
+                        return acc;
+                    }, {});
+
+                    const isAutoShipped = configMap['shipping_auto_update_shipped'] !== "false"; // Default true
+                    const isAutoComplete = configMap['shipping_auto_complete_delivered'] !== "false"; // Default true
+
+                    // Biteship Status Mapping
+                    if (status === "picking" || status === "picked") {
                         newStatus = "processing";
+                        statusNote = "Kurir sedang dalam perjalanan menjemput paket.";
                     } else if (status === "dropping_off" || status === "shipping" || status === "arrived_at_sorting_hub") {
-                        newStatus = "shipped";
+                        if (isAutoShipped) {
+                            newStatus = "shipped";
+                            statusNote = `Paket telah diserahkan ke kurir (${courier?.company || 'Ekspedisi'}). Resi: ${waybill_id || '-'}`;
+                        } else {
+                            console.log(`ℹ️ Webhook: Auto-Update Shipped is DISABLED. Skipping status transition for Order ${order.id}`);
+                        }
                     } else if (status === "delivered") {
-                        newStatus = "delivered";
+                        if (isAutoComplete) {
+                            newStatus = "delivered";
+                            statusNote = "Paket telah sampai di tujuan dan diterima oleh pelanggan.";
+                        } else {
+                            console.log(`ℹ️ Webhook: Auto-Complete is DISABLED. Skipping status transition for Order ${order.id}`);
+                        }
                     } else if (status === "cancelled" || status === "rejected") {
                         newStatus = "cancelled";
+                        statusNote = `Pengiriman dibatalkan oleh pihak ekspedisi. Alasan: ${req.body.payload.status_details || 'N/A'}`;
                     }
 
-                    if (newStatus !== order.status) {
-                        await order.update({ status: newStatus });
+                    if (newStatus !== previousStatus) {
+                        await order.update({ 
+                            status: newStatus,
+                            tracking_number: waybill_id || order.tracking_number
+                        });
 
+                        // 1. Record History
+                        const OrderStatusHistory = require("../order/models/OrderStatusHistoryModel").default;
+                        await OrderStatusHistory.create({
+                            order_id: order.id,
+                            status: newStatus,
+                            note: statusNote
+                        });
+
+                        // 2. Send Notification
+                        const NotificationService = require("../notification/NotificationService");
+                        const titleMap: any = {
+                            shipped: "🚚 Paket Sedang Dikirim",
+                            delivered: "✅ Paket Telah Sampai",
+                            cancelled: "⚠️ Pengiriman Gagal"
+                        };
+
+                        if (titleMap[newStatus]) {
+                            await NotificationService.createNotification({
+                                user_id: order.user_id,
+                                title: titleMap[newStatus],
+                                message: statusNote,
+                                type: newStatus === 'delivered' ? 'success' : 'info',
+                                category: "transaction",
+                                status: "ongoing",
+                                actionUrl: `/orders/${order.id}`,
+                                metadata: { order_id: order.id, tracking_number: waybill_id }
+                            });
+                        }
+                        
+                        console.log(`✅ Webhook Successful: Order ${order.id} updated to ${newStatus}`);
                     }
                 } else {
-                    console.warn(`⚠️ Order with external_id ${externalId} not found`);
+                    console.warn(`⚠️ Webhook: Order with ID ${externalId} not found`);
                 }
             }
         }
@@ -392,6 +441,19 @@ export const createOrders = async (req: Request, res: Response) => {
         const minutes = String(now.getMinutes()).padStart(2, "0");
         const timeString = `${hours}:${minutes}`;
 
+        // Fetch Origin Data from Database
+        const GeneralSettings = require("../setting/models/SettingModel").default;
+        const settings = await GeneralSettings.findAll({ where: { group: 'shipping' } });
+        const configMap = settings.reduce((acc: any, curr: any) => {
+            acc[curr.key] = curr.value;
+            return acc;
+        }, {});
+
+        const originContactName = configMap['shipping_origin_name'] || process.env.STORE_CONTACT_NAME || "PE Skinpro ID";
+        const originContactPhone = configMap['shipping_origin_phone'] || process.env.STORE_CONTACT_PHONE || "08123456789";
+        const originAddress = configMap['shipping_origin_address'] || process.env.STORE_ADDRESS || "Jl. Dukuh Patra II No.75";
+        const originPostalCode = parseInt(configMap['shipping_origin_postal_code'] || process.env.STORE_POSTAL_CODE || "12870");
+
         const payload = {
             origin_area_id: originAreaId,
             destination_area_id: destinationAreaId,
@@ -402,12 +464,13 @@ export const createOrders = async (req: Request, res: Response) => {
             delivery_time: timeString, // Format HH:mm
             order_note: "Please handle with care",
             items: biteshipItems,
+            external_id: order.id, // Linked for automatic status tracking
 
             // Origin Details (Flattened)
-            origin_contact_name: process.env.STORE_CONTACT_NAME || "PE Skinpro ID",
-            origin_contact_phone: process.env.STORE_CONTACT_PHONE || "08123456789",
-            origin_address: process.env.STORE_ADDRESS || "Jl. Dukuh Patra II No.75",
-            origin_postal_code: parseInt(process.env.STORE_POSTAL_CODE || "12870"),
+            origin_contact_name: originContactName,
+            origin_contact_phone: originContactPhone,
+            origin_address: originAddress,
+            origin_postal_code: originPostalCode,
             // origin_coordinate: ...
 
             // Destination Details (Flattened)

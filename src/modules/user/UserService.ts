@@ -1,13 +1,35 @@
 import Users from "./models/UserModel";
+import RolePermissions from "./models/RolePermissionModel";
 import bcrypt from "bcrypt";
 import slugify from "slugify";
 
-export const getAllUsers = async (page: number, limit: number) => {
+export const getAllUsers = async (page: number, limit: number, role?: string) => {
     const offset = (page - 1) * limit;
+    
+    const whereClause: any = {};
+    if (role) {
+        whereClause.role = role;
+    }
+
     const { count, rows } = await Users.findAndCountAll({
+        where: whereClause,
         limit,
         offset,
         order: [["name", "ASC"]],
+    });
+
+    // Get global role distribution
+    const roleStats = await Users.findAll({
+        attributes: ['role', [Users.sequelize!.fn('COUNT', Users.sequelize!.col('role')), 'count']],
+        group: ['role'],
+        raw: true
+    });
+
+    // Get global status distribution
+    const statusStats = await Users.findAll({
+        attributes: ['status', [Users.sequelize!.fn('COUNT', Users.sequelize!.col('status')), 'count']],
+        group: ['status'],
+        raw: true
     });
 
     return {
@@ -16,6 +38,10 @@ export const getAllUsers = async (page: number, limit: number) => {
         page,
         totalPages: Math.ceil(count / limit),
         data: rows,
+        stats: {
+            roles: roleStats,
+            status: statusStats
+        }
     };
 };
 
@@ -33,8 +59,15 @@ export const deleteUserById = async (id: string, requestorId?: string) => {
         throw new Error("Tidak boleh menghapus akun sendiri");
     }
 
-    await user.destroy();
-    return true;
+    try {
+        await user.destroy();
+        return true;
+    } catch (error: any) {
+        if (error.name === "SequelizeForeignKeyConstraintError") {
+            throw new Error("User tidak bisa dihapus karena sudah memiliki histori pesanan. Silakan ubah status menjadi Inactive saja.");
+        }
+        throw error;
+    }
 };
 
 export const createUser = async (data: any) => {
@@ -54,6 +87,7 @@ export const createUser = async (data: any) => {
         email,
         password: hashedPassword,
         role: role || "user",
+        permissions: data.permissions || null,
         status: "active"
     });
 
@@ -83,10 +117,55 @@ export const updateUser = async (id: string, data: any) => {
     if (data.avatarUrl) {
         user.images = data.avatarUrl;
     }
+    if (data.role) user.role = data.role;
+    if (data.status) user.status = data.status;
+
+    // Handle password update if provided
+    if (data.password && data.password.trim() !== "") {
+        user.password = await bcrypt.hash(data.password, 10);
+    }
 
 
 
     await user.save();
 
     return user;
+};
+
+
+export const getAllRolePermissions = async () => {
+    return await RolePermissions.findAll();
+};
+
+export const updateRolePermissions = async (role: string, permissions: string[], name?: string, color?: string) => {
+    let rp = await RolePermissions.findByPk(role);
+    if (!rp) {
+        rp = await RolePermissions.create({ role, permissions, name, color });
+    } else {
+        rp.permissions = permissions;
+        if (name) rp.name = name;
+        if (color) rp.color = color;
+        await rp.save();
+    }
+    return rp;
+};
+
+export const deleteRolePermission = async (role: string) => {
+    // Prevent deleting core roles
+    const protectedRoles = ["super_admin", "admin", "user"];
+    if (protectedRoles.includes(role)) {
+        throw new Error("Peran sistem tidak boleh dihapus");
+    }
+
+    // Check if role is in use
+    const userCount = await Users.count({ where: { role } });
+    if (userCount > 0) {
+        throw new Error(`Peran ini masih digunakan oleh ${userCount} pengguna`);
+    }
+
+    const rp = await RolePermissions.findByPk(role);
+    if (!rp) throw new Error("Peran tidak ditemukan");
+
+    await rp.destroy();
+    return true;
 };

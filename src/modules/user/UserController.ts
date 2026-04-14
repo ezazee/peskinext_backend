@@ -4,10 +4,23 @@ import * as UserService from "./UserService";
 export const getUsers = async (req: Request, res: Response) => {
     try {
         const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 10;
+        const limit = parseInt(req.query.limit as string) || 100;
+        const role = req.query.role as string;
 
-        const result = await UserService.getAllUsers(page, limit);
+        const result = await UserService.getAllUsers(page, limit, role);
         return res.json(result);
+    } catch (error: any) {
+        console.error(error);
+        return res.status(500).json({ message: "Terjadi kesalahan pada server" });
+    }
+};
+
+export const getUserDetail = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const user = await UserService.getUserById(id as string);
+        if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
+        return res.json({ user });
     } catch (error: any) {
         console.error(error);
         return res.status(500).json({ message: "Terjadi kesalahan pada server" });
@@ -37,6 +50,18 @@ export const createUser = async (req: Request, res: Response) => {
         return res.status(201).json({ message: "Tambah User berhasil" });
     } catch (error: any) {
         const status = error.message === "Email sudah terdaftar" ? 400 : 500;
+        return res.status(status).json({ message: error.message });
+    }
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const updatedUser = await UserService.updateUser(id as string, req.body);
+        return res.json({ message: "User updated successfully", user: updatedUser });
+    } catch (error: any) {
+        console.error(error);
+        const status = error.message === "User tidak ditemukan" ? 404 : 400;
         return res.status(status).json({ message: error.message });
     }
 };
@@ -77,5 +102,36 @@ export const getSelf = async (req: Request, res: Response) => {
         return res.json({ user });
     } catch (error: any) {
         return res.status(500).json({ message: error.message });
+    }
+};
+
+export const getRolePermissions = async (req: Request, res: Response) => {
+    try {
+        const result = await UserService.getAllRolePermissions();
+        return res.json(result);
+    } catch (error: any) {
+        return res.status(500).json({ message: "Terjadi kesalahan pada server" });
+    }
+};
+
+export const updateRolePermissions = async (req: Request, res: Response) => {
+    try {
+        const { role, permissions, name, color } = req.body;
+        if (!role) return res.status(400).json({ message: "Role wajib diisi" });
+        const result = await UserService.updateRolePermissions(role, permissions, name, color);
+        return res.json({ message: "Izin peran berhasil diperbarui", data: result });
+    } catch (error: any) {
+        return res.status(500).json({ message: "Terjadi kesalahan pada server" });
+    }
+};
+
+export const deleteRolePermission = async (req: Request, res: Response) => {
+    try {
+        const { role } = req.params;
+        if (!role) return res.status(400).json({ message: "Role ID wajib diisi" });
+        await UserService.deleteRolePermission(role);
+        return res.json({ message: "Peran berhasil dihapus" });
+    } catch (error: any) {
+        return res.status(400).json({ message: error.message || "Gagal menghapus peran" });
     }
 };

@@ -6,16 +6,17 @@ const router = express.Router();
 /**
  * @swagger
  * tags:
- *   name: Cart
- *   description: Cart management
+ *   name: Order & Checkout
+ *   description: Proses pembelian dari keranjang hingga pembayaran.
  */
 
 /**
  * @swagger
  * /cart:
  *   post:
- *     summary: Add Item to Cart
- *     tags: [Cart]
+ *     summary: Tambah ke Keranjang
+ *     description: Menambahkan produk dengan varian tertentu ke dalam keranjang belanja milik pelanggan.
+ *     tags: [Order & Checkout]
  *     requestBody:
  *       required: true
  *       content:
@@ -24,17 +25,13 @@ const router = express.Router();
  *             type: object
  *             required: [user_id, product_id, variant_id]
  *             properties:
- *               user_id:
- *                 type: integer
- *               product_id:
- *                 type: integer
- *               variant_id:
- *                 type: integer
- *               quantity:
- *                 type: integer
+ *               user_id: { type: string, description: "UUID pengguna" }
+ *               product_id: { type: string }
+ *               variant_id: { type: integer }
+ *               quantity: { type: integer, example: 1 }
  *     responses:
  *       201:
- *         description: Item added to cart
+ *         description: Berhasil ditambahkan ke keranjang.
  */
 router.post("/cart", CartController.addToCart);
 
@@ -42,17 +39,17 @@ router.post("/cart", CartController.addToCart);
  * @swagger
  * /cart/{user_id}:
  *   get:
- *     summary: Get Cart by User ID
- *     tags: [Cart]
+ *     summary: Lihat Keranjang
+ *     description: Mengambil semua daftar belanjaan yang ada di dalam keranjang pengguna berdasarkan ID-nya.
+ *     tags: [Order & Checkout]
  *     parameters:
  *       - in: path
  *         name: user_id
  *         required: true
- *         schema:
- *           type: integer
+ *         schema: { type: string }
  *     responses:
  *       200:
- *         description: Cart details
+ *         description: Data keranjang berhasil diambil.
  */
 router.get("/cart/:user_id", CartController.getCartByUser);
 
@@ -60,25 +57,25 @@ router.get("/cart/:user_id", CartController.getCartByUser);
  * @swagger
  * /cart/{id}:
  *   patch:
- *     summary: Update Cart Item Quantity
- *     tags: [Cart]
+ *     summary: Update Jumlah Item
+ *     description: Mengubah jumlah (kuantitas) barang yang ada di dalam keranjang.
+ *     tags: [Order & Checkout]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: integer
+ *         schema: { type: integer }
+ *         description: ID unik item di dalam keranjang.
  *     requestBody:
  *       content:
  *         application/json:
  *           schema:
  *             type: object
  *             properties:
- *               quantity:
- *                 type: integer
+ *               quantity: { type: integer }
  *     responses:
  *       200:
- *         description: Cart item updated
+ *         description: Jumlah barang berhasil diperbarui.
  */
 router.patch("/cart/:id", CartController.updateCartItem);
 
@@ -86,17 +83,17 @@ router.patch("/cart/:id", CartController.updateCartItem);
  * @swagger
  * /cart/{id}:
  *   delete:
- *     summary: Remove Cart Item
- *     tags: [Cart]
+ *     summary: Hapus dari Keranjang
+ *     description: Mengeluarkan satu jenis barang dari keranjang belanja.
+ *     tags: [Order & Checkout]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: integer
+ *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Cart item removed
+ *         description: Barang berhasil dihapus dari keranjang.
  */
 router.delete("/cart/:id", CartController.removeCartItem);
 

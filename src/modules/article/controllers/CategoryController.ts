@@ -23,7 +23,7 @@ export const createCategory = async (req: Request, res: Response) => {
 export const getCategories = async (req: Request, res: Response) => {
     try {
         const categories = await Categories.findAll({
-            where: { parent_id: null },
+            // Removed parent_id: null to show all categories as requested by user
             include: [{ model: Categories, as: "subcategories" }],
         });
         res.json(categories);

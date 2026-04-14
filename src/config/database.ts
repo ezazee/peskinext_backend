@@ -2,7 +2,8 @@ import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
 import * as pg from "pg";
 
-dotenv.config();
+import path from "path";
+dotenv.config({ path: path.join(__dirname, "../../.env") });
 
 const dbUrl = process.env.DATABASE_URL;
 

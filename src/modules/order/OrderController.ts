@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Op } from "sequelize";
 import Orders from "./models/OrderModel";
 import * as NotificationService from "../notification/NotificationService";
 import OrderItems from "./models/OrderItemModel";
@@ -12,20 +13,20 @@ import Users from "../user/models/UserModel";
 import * as DokuService from "../payment/services/DokuService";
 import Reviews from "../review/models/ReviewModel";
 import db from "../../config/database";
+import { deductStockForOrder, restoreStockForOrder, incrementSoldCount } from "../product/ProductService";
+import * as CouponService from "../coupon/CouponService";
 
 export const createOrder = async (req: Request, res: Response) => {
     const t = await db.transaction();
     try {
         const { user_id, address_id, courier, courier_service, shipping_cost, coupon_id, items } = req.body;
 
-        // Use provided address_id or fallback to default address
         let finalAddressId = address_id;
         if (!finalAddressId || finalAddressId === "temp") {
             const address = await Address.findOne({ where: { user_id, is_default: "yes" } });
             if (address) {
                 finalAddressId = address.id;
             } else {
-                // Allow temporary address for initial order creation
                 finalAddressId = "00000000-0000-0000-0000-000000000000";
             }
         }
@@ -33,26 +34,20 @@ export const createOrder = async (req: Request, res: Response) => {
         let orderItemsData: any[] = [];
         let grandTotalCalc = 0;
 
-        // 1. Use items from payload if available (Direct Buy / specific checkout)
         if (items && Array.isArray(items) && items.length > 0) {
             orderItemsData = items.map((item: any) => ({
                 product_id: item.product_id,
-                quantity: item.quantity || item.qty, // Accept both 'quantity' and 'qty'
+                quantity: item.quantity || item.qty,
                 price: item.price,
-                variant_id: item.variant_id || null // Optional if you have variants
+                variant_id: item.variant_id || null
             }));
 
-            // Calculate total from items
             items.forEach((item: any) => {
                 const qty = item.quantity || item.qty || 1;
                 grandTotalCalc += item.price * qty;
             });
 
-            // NOTE: Cart is managed in frontend localStorage, not database
-            // Frontend will handle removing items from cart
-
         } else {
-            // 2. Fallback to Database Cart
             const cartItems = await Cart.findAll({
                 where: { user_id },
                 include: [{ model: Products, as: "product" }],
@@ -70,42 +65,58 @@ export const createOrder = async (req: Request, res: Response) => {
                     product_id: item.product_id,
                     quantity: item.quantity,
                     price: price,
-                    // variant?? CartModel might need update if we support variants there
                 };
             });
 
-            // Only clear cart if we used the cart!
             await Cart.destroy({ where: { user_id }, transaction: t });
         }
 
         let discount = 0;
-        if (coupon_id) {
-            discount = 0; // Implement logic if needed
-        }
+        let validatedCouponId: string | undefined = undefined;
 
-        // recalculate total or use payload? 
-        // Best practice: Recalculate server side. 
-        // But for DOKU integration urgency, let's allow frontend total or re-sum.
-        // The controller previously did: totalAmount = subtotal + shipping - discount
+        if (coupon_id) {
+            try {
+                // Get region for coupon validation
+                let regionTag = "";
+                const address = await Address.findByPk(finalAddressId);
+                if (address) {
+                    regionTag = address.regencies || "";
+                }
+
+                const couponCheck = await CouponService.checkCoupon(coupon_id, grandTotalCalc, regionTag);
+                if (couponCheck.valid) {
+                    discount = couponCheck.discount;
+                    validatedCouponId = coupon_id;
+                }
+            } catch (couponErr: any) {
+                console.warn(`⚠️ Coupon validation failed: ${couponErr.message}`);
+                // Continue without discount if coupon invalid? 
+                // Alternatively, return error if user explicitly provided coupon but it's invalid.
+                // For now, let's allow return error to inform user.
+                await t.rollback();
+                return res.status(400).json({ message: `Kupon tidak valid: ${couponErr.message}` });
+            }
+        }
 
         const totalAmount = grandTotalCalc + parseFloat(shipping_cost || 0) - discount;
 
-        // Create order (address_id and courier can be temporary, will be updated in checkout)
         const order = await Orders.create(
             {
                 user_id,
                 address_id: finalAddressId,
                 total_amount: totalAmount,
                 shipping_cost: parseFloat(shipping_cost || 0),
-                original_shipping_cost: parseFloat(shipping_cost || 0), // Initially same as shipping_cost
+                original_shipping_cost: parseFloat(shipping_cost || 0),
                 discount,
-                courier: courier || "pending", // Temporary value
-                courier_service: courier_service || null,
+                coupon_id: validatedCouponId,
+                courier: courier || "pending",
+                courier_service: courier_service || undefined,
                 status: "pending",
-                expires_at: new Date(Date.now() + 30 * 60 * 1000) // 30 minutes expiry to match DOKU
+                expires_at: new Date(Date.now() + 30 * 60 * 1000)
             },
             { transaction: t }
         );
+
         const finalOrderItems = orderItemsData.map(item => ({
             order_id: order.id,
             product_id: item.product_id,
@@ -121,7 +132,15 @@ export const createOrder = async (req: Request, res: Response) => {
             note: "Pesanan dibuat, menunggu pembayaran",
         }, { transaction: t });
 
-        await Cart.destroy({ where: { user_id }, transaction: t });
+        // Increment coupon usage if applied
+        if (validatedCouponId) {
+            try {
+                await CouponService.useCoupon(validatedCouponId, t);
+            } catch (couponErr) {
+                console.error(`⚠️ Non-fatal error incrementing coupon ${validatedCouponId}:`, couponErr);
+                // We don't throw error here to avoid breaking the whole checkout process.
+            }
+        }
 
         await t.commit();
         res.status(201).json({
@@ -130,11 +149,11 @@ export const createOrder = async (req: Request, res: Response) => {
             total: totalAmount,
             shipping_cost,
             courier,
-            expires_at: order.expires_at // Added for frontend timer
+            expires_at: order.expires_at
         });
 
     } catch (err: any) {
-        await t.rollback();
+        if (t) await t.rollback();
         console.error("❌ Error createOrder:", err);
         res.status(500).json({ message: "Gagal membuat order", error: err.message });
     }
@@ -143,17 +162,21 @@ export const createOrder = async (req: Request, res: Response) => {
 export const getOrders = async (req: Request, res: Response) => {
     try {
         const { user_id } = req.params;
-        const orders = await Orders.findAll({
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const offset = (page - 1) * limit;
+
+        const { count, rows: orders } = await Orders.findAndCountAll({
             where: { user_id: user_id as string },
             include: [{
                 model: OrderItems,
                 as: "items"
             }],
-            order: [["created_at", "DESC"]]
+            order: [["created_at", "DESC"]],
+            limit,
+            offset
         });
 
-        // Proactive Check for Pending Orders (Limit to recent ones to avoid delay)
-        // We check status for orders that are 'pending' to sync with DOKU
         for (const order of orders) {
             if (order.status === "pending") {
                 try {
@@ -161,15 +184,21 @@ export const getOrders = async (req: Request, res: Response) => {
                     if (transaction && transaction.invoice_number) {
                         const status = await DokuService.checkTransactionStatus(transaction.invoice_number);
                         if (status === "SUCCESS") {
-                            order.status = "paid";
-                            transaction.status = "success";
-                            await order.save();
-                            await transaction.save();
-
-                        } else if (status === "FAILED" || status === "EXPIRED") {
-                            // Optional: mark failed
-                            transaction.status = "failed";
-                            await transaction.save();
+                            const transactionDB = await db.transaction();
+                            try {
+                                order.status = "paid";
+                                transaction.status = "success";
+                                await order.save({ transaction: transactionDB });
+                                await transaction.save({ transaction: transactionDB });
+                                const items = await OrderItems.findAll({ where: { order_id: order.id }, transaction: transactionDB });
+                                const itemData = items.map(item => ({ product_id: item.product_id, variant_id: item.variant_id, quantity: item.quantity }));
+                                await deductStockForOrder(itemData, transactionDB);
+                                await incrementSoldCount(itemData, transactionDB);
+                                await transactionDB.commit();
+                            } catch (e) {
+                                await transactionDB.rollback();
+                                console.error("⚠️ Failed sync deduct stock in getOrders:", e);
+                            }
                         }
                     }
                 } catch (e) {
@@ -178,30 +207,18 @@ export const getOrders = async (req: Request, res: Response) => {
             }
         }
 
-        // Manually fetch product data for each order item
         const formattedOrders = await Promise.all(orders.map(async (order: any) => {
             const orderJson = order.toJSON();
-
-
-            // Fetch product and variant data for each item
             const itemsWithProducts = await Promise.all(orderJson.items.map(async (item: any) => {
                 const product = await Products.findByPk(item.product_id, {
                     attributes: ['id', 'name', 'slug', 'front_image', 'type', 'weight_gr']
                 });
 
                 let variant: any = null;
-                if (item.variant_id) {
-                    variant = await ProductVariants.findByPk(item.variant_id);
-                }
+                if (item.variant_id) { variant = await ProductVariants.findByPk(item.variant_id); }
 
-                // Fetch review data for this item
                 const existingReview = await Reviews.findOne({
-                    where: {
-                        user_id: user_id,
-                        product_id: item.product_id,
-                        order_id: order.id,
-                        variant_id: item.variant_id || null
-                    }
+                    where: { user_id: user_id, product_id: item.product_id, order_id: order.id, variant_id: item.variant_id || null }
                 });
 
                 let reviewData: any = null;
@@ -209,51 +226,27 @@ export const getOrders = async (req: Request, res: Response) => {
                     const reviewJson = existingReview.toJSON() as any;
                     let images: string[] = [];
                     try { images = JSON.parse(reviewJson.images || "[]"); } catch (e) { }
-
-                    reviewData = {
-                        id: reviewJson.id,
-                        rating: reviewJson.rating,
-                        comment: reviewJson.comment,
-                        images: images,
-                        created_at: reviewJson.created_at
-                    };
+                    reviewData = { id: reviewJson.id, rating: reviewJson.rating, comment: reviewJson.comment, images, created_at: reviewJson.created_at };
                 }
 
-                return {
-                    ...item,
-                    product: product ? product.toJSON() : null,
-                    variant: variant ? variant.toJSON() : null,
-                    review: reviewData
-                };
+                return { ...item, product: product ? product.toJSON() : null, variant: variant ? variant.toJSON() : null, review: reviewData };
             }));
 
-            // Fetch Invoice Number manually
             let invoiceNumber: string | null = null;
             const transaction = await Transaction.findOne({ where: { order_id: order.id } });
             if (transaction) {
                 invoiceNumber = transaction.invoice_number;
             } else {
-                // Fallback: Generate a prettier ID format
                 const dateStr = new Date(order.created_at).toISOString().slice(0, 10).replace(/-/g, "");
                 const shortId = order.id.split("-")[0].toUpperCase();
                 invoiceNumber = `INV/${dateStr}/${shortId}`;
             }
 
-            return {
-                ...orderJson,
-                items: itemsWithProducts,
-                invoiceNumber,
-                total_amount: parseFloat(order.total_amount),
-                shipping_cost: parseFloat(order.shipping_cost),
-                original_shipping_cost: parseFloat(order.original_shipping_cost || order.shipping_cost),
-                discount: parseFloat(order.discount),
-                expires_at: order.expires_at, // Ensure explicit mapping if needed, though ...orderJson might cover it
-            };
+            return { ...orderJson, items: itemsWithProducts, invoiceNumber, total_amount: parseFloat(order.total_amount), shipping_cost: parseFloat(order.shipping_cost), discount: parseFloat(order.discount), expires_at: order.expires_at };
         }));
 
-
-
         res.json(formattedOrders);
+
     } catch (err: any) {
         console.error("❌ Error getOrders:", err);
         res.status(500).json({ message: "Gagal mengambil orders", error: err.message });
@@ -265,42 +258,60 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { status, note } = req.body;
-
         const order = await Orders.findByPk(id as string, { transaction: t });
-        if (!order) {
-            await t.rollback();
-            return res.status(404).json({ message: "Order tidak ditemukan" });
-        }
+        if (!order) { await t.rollback(); return res.status(404).json({ message: "Order tidak ditemukan" }); }
 
+        const previousStatus = order.status;
         order.status = status as any;
         await order.save({ transaction: t });
+        await OrderStatusHistory.create({ order_id: order.id, status, note: note || null }, { transaction: t });
 
-        await OrderStatusHistory.create({
-            order_id: order.id,
-            status,
-            note: note || null,
-        }, { transaction: t });
+        if ((status === "paid" || status === "processing") && 
+            (previousStatus === "pending" || previousStatus === "cancelled")) {
+            const items = await OrderItems.findAll({ where: { order_id: order.id }, transaction: t });
+            const itemData = items.map(item => ({ product_id: item.product_id, variant_id: item.variant_id, quantity: item.quantity }));
+            await deductStockForOrder(itemData, t);
+            await incrementSoldCount(itemData, t);
+        } else if (status === "cancelled" && 
+                   (previousStatus === "paid" || previousStatus === "processing" || previousStatus === "shipped" || previousStatus === "delivered" || previousStatus === "pending")) {
+            const items = await OrderItems.findAll({ where: { order_id: order.id }, transaction: t });
+            const itemData = items.map(item => ({ product_id: item.product_id, variant_id: item.variant_id, quantity: item.quantity }));
+            await restoreStockForOrder(itemData, t);
+
+            // Restore coupon usage if order is cancelled
+            if (order.coupon_id) {
+                const couponIds = order.coupon_id.split(",").filter(id => id.trim() !== "");
+                for (const couponId of couponIds) {
+                    await CouponService.restoreCoupon(couponId.trim(), t);
+                }
+            }
+        }
 
         await t.commit();
         res.json({ message: `Status order berhasil diupdate ke "${status}"` });
     } catch (err: any) {
-        await t.rollback();
+        if (t) await t.rollback();
         console.error("❌ Gagal update status order:", err);
         res.status(500).json({ message: "Gagal update status order", error: err.message });
     }
 };
 
 export const updateOrder = async (req: Request, res: Response) => {
+    const t = await db.transaction();
     try {
         const { id } = req.params;
-        const { address_id, courier, shipping_service, shipping_cost, original_shipping_cost, discount, total_amount } = req.body;
-
-        const order = await Orders.findByPk(id as string);
+        const { address_id, courier, shipping_service, shipping_cost, original_shipping_cost, discount, total_amount, coupon_id } = req.body;
+        
+        const order = await Orders.findByPk(id as string, { transaction: t });
         if (!order) {
+            await t.rollback();
             return res.status(404).json({ message: "Order tidak ditemukan" });
         }
 
-        // Update order fields
+        // Track if a coupon is being added for the first time
+        const wasCouponSet = !!order.coupon_id;
+        const isNewCouponBody = !!coupon_id;
+
         if (address_id !== undefined) order.address_id = address_id;
         if (courier !== undefined) order.courier = courier;
         if (shipping_service !== undefined) (order as any).shipping_service = shipping_service;
@@ -308,14 +319,29 @@ export const updateOrder = async (req: Request, res: Response) => {
         if (original_shipping_cost !== undefined) order.original_shipping_cost = parseFloat(original_shipping_cost);
         if (discount !== undefined) order.discount = parseFloat(discount);
         if (total_amount !== undefined) order.total_amount = parseFloat(total_amount);
+        
+        if (coupon_id !== undefined) {
+            order.coupon_id = coupon_id;
+        }
 
-        await order.save();
+        await order.save({ transaction: t });
 
-        res.json({
-            message: "Order berhasil diupdate",
-            order: order.toJSON()
-        });
+        // If coupon(s) newly added during update, increment usage
+        if (!wasCouponSet && isNewCouponBody) {
+            const couponIds = coupon_id.split(",").filter((id: string) => id.trim() !== "");
+            for (const singleId of couponIds) {
+                try {
+                    await CouponService.useCoupon(singleId.trim(), t);
+                } catch (couponErr) {
+                    console.error(`⚠️ Failed to increment coupon ${singleId} during update:`, couponErr);
+                }
+            }
+        }
+
+        await t.commit();
+        res.json({ message: "Order berhasil diupdate", order: order.toJSON() });
     } catch (err: any) {
+        if (t) await t.rollback();
         console.error("❌ Error updateOrder:", err);
         res.status(500).json({ message: "Gagal update order", error: err.message });
     }
@@ -324,20 +350,14 @@ export const updateOrder = async (req: Request, res: Response) => {
 export const getOrderDetails = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-
-        let whereClause: any = { id };
-        // Check if id is NOT a UUID (e.g. starts with INV/)
-        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        const cleanId = id.replace(/ /g, '-').replace(/%20/g, '-');
+        let whereClause: any = { id: cleanId };
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
 
         if (!isUuid) {
-            // Try to find transaction by invoice_number first
             const tx = await Transaction.findOne({ where: { invoice_number: id } });
-            if (tx) {
-                whereClause = { id: tx.order_id };
-            } else {
-                // return 404 if not uuid and not found in tx
-                return res.status(404).json({ message: "Order tidak ditemukan (Invalid ID)" });
-            }
+            if (tx) { whereClause = { id: tx.order_id }; }
+            else { return res.status(404).json({ message: "Order tidak ditemukan (Invalid ID format)" }); }
         }
 
         const order = await Orders.findOne({
@@ -345,173 +365,78 @@ export const getOrderDetails = async (req: Request, res: Response) => {
             include: [
                 { model: Users, as: "user", attributes: ["id", "name", "email"] },
                 { model: Address, as: "address" },
-                {
-                    model: OrderItems,
-                    as: "items",
-                    include: [
-                        {
-                            model: Products,
-                            as: "product",
-                            attributes: ["id", "name", "slug", "front_image", "type", "weight_gr"]
-                        },
-                        {
-                            model: ProductVariants,
-                            as: "variant",
-                            attributes: ["id", "variant_name"]
-                        }
-                    ]
-                },
-                { model: OrderStatusHistory, as: "order_status_history", order: [["created_at", "DESC"]] },
+                { model: OrderStatusHistory, as: "order_status_history" },
             ],
         });
-        // ...
 
-        if (!order) {
-            return res.status(404).json({ message: "Order tidak ditemukan" });
-        }
+        if (!order) return res.status(404).json({ message: "Order tidak ditemukan" });
 
-        // Proactive Status Check for Pending Orders (Sync with DOKU)
         if (order.status === "pending") {
             try {
                 const transaction = await Transaction.findOne({ where: { order_id: order.id } });
                 if (transaction && transaction.invoice_number) {
                     const status = await DokuService.checkTransactionStatus(transaction.invoice_number);
                     if (status === "SUCCESS") {
-                        // Update Transaction
-                        transaction.status = "success";
-                        await transaction.save();
-
-                        // Update Order
-                        order.status = "paid"; // Will be saved below if needed, or explicitly here
-                        await order.save();
-
-                    } else if (status === "FAILED" || status === "EXPIRED") {
-                        transaction.status = "failed"; // or expired
-                        await transaction.save();
-                        // We might want to cancel the order immediately?
-                        // order.status = "cancelled";
-                        // await order.save();
+                        const transactionDB = await db.transaction();
+                        try {
+                            transaction.status = "success"; await transaction.save({ transaction: transactionDB });
+                            order.status = "paid"; await order.save({ transaction: transactionDB });
+                            const items = await OrderItems.findAll({ where: { order_id: order.id }, transaction: transactionDB });
+                            const itemData = items.map(item => ({ product_id: item.product_id, variant_id: item.variant_id, quantity: item.quantity }));
+                            await deductStockForOrder(itemData, transactionDB);
+                            await incrementSoldCount(itemData, transactionDB);
+                            await transactionDB.commit();
+                        } catch (e) {
+                            await transactionDB.rollback();
+                            console.error("⚠️ Failed sync deduct stock in getOrderDetails:", e);
+                        }
                     }
                 }
-            } catch (checkErr) {
-                console.error("⚠️ Failed to check DOKU status:", checkErr);
-            }
+            } catch (checkErr) { console.error("⚠️ Failed to check DOKU status:", checkErr); }
         }
 
-        // Auto-cancel if pending and expired
-        if (order.status === "pending") {
-            const now = new Date();
-            let isExpired = false;
+        // DEEP SQL FETCH for items to ensure consistency
+        const rawItems: any = await db.query(
+            `SELECT oi.*, p.name as product_name, p.type as product_type, p.front_image 
+             FROM order_items oi 
+             LEFT JOIN products p ON oi.product_id = p.id 
+             WHERE oi.order_id = :orderId`,
+            { replacements: { orderId: order.id }, type: (db as any).QueryTypes?.SELECT || "SELECT" }
+        );
 
-            if (order.expires_at) {
-                isExpired = now > new Date(order.expires_at);
-            } else {
-                // Fallback logic if no expires_at set (legacy orders) -> 24 hours
-                const created = new Date(order.created_at).getTime();
-                const diffMinutes = (now.getTime() - created) / 1000 / 60;
-                if (diffMinutes > 30) {
-                    isExpired = true;
-                }
-            }
+        const items = (Array.isArray(rawItems) ? rawItems : []).map((item: any) => ({
+            id: item.id,
+            quantity: item.quantity,
+            price: item.price,
+            product: { id: item.product_id, name: item.product_name, type: item.product_type, front_image: item.front_image }
+        }));
 
-            if (isExpired) {
-                order.status = "cancelled"; // or expired
-                await order.save();
-
-                await OrderStatusHistory.create({
-                    order_id: order.id,
-                    status: "expired",
-                    note: "Order expired (auto-cancel)",
-                });
-
-
-            }
-        }
-
-        // Enrich order items with review data
         const orderJson = order.toJSON() as any;
-        const userId = orderJson.user?.id;
-
-
-
-        if (orderJson.items && userId) {
-            for (const item of orderJson.items) {
-
-
-                const existingReview = await Reviews.findOne({
-                    where: {
-                        user_id: userId,
-                        product_id: item.product_id,
-                        order_id: order.id,
-                        variant_id: item.variant_id || null
-                    }
-                });
-
-                if (existingReview) {
-                    const reviewJson = existingReview.toJSON() as any;
-                    let images: string[] = [];
-                    try { images = JSON.parse(reviewJson.images || "[]"); } catch (e) { }
-
-                    item.review = {
-                        id: reviewJson.id,
-                        rating: reviewJson.rating,
-                        comment: reviewJson.comment,
-                        images: images,
-                        created_at: reviewJson.created_at
-                    };
-
-                }
-            }
-        }
-
-        // Fetch Invoice Number manually if not associated
         let invoiceNumber: string | null = null;
         const transaction = await Transaction.findOne({ where: { order_id: order.id } });
-        if (transaction) {
-            invoiceNumber = transaction.invoice_number;
-        } else {
-            // Fallback: Generate a prettier ID format if no transaction exists yet
-            // e.g. INV/20231027/A1B2C3
-            try {
-                const dateStr = new Date(order.created_at).toISOString().slice(0, 10).replace(/-/g, "");
-                const shortId = order.id.split("-")[0].toUpperCase();
-                invoiceNumber = `INV/${dateStr}/${shortId}`;
-            } catch (e) {
-                // console.error("Error generating fallback invoice number", e);
-                invoiceNumber = `INV/UNKNOWN/${order.id.slice(0, 8)}`;
-            }
+        if (transaction) { invoiceNumber = transaction.invoice_number; }
+        else {
+            const dateStr = new Date(order.created_at).toISOString().slice(0, 10).replace(/-/g, "");
+            const shortId = order.id.split("-")[0].toUpperCase();
+            invoiceNumber = `INV/${dateStr}/${shortId}`;
         }
 
-        // Construct Shipping Address
         let shippingAddress: any = null;
-        if ((order as any).address) {
-            const addr = (order as any).address;
-            shippingAddress = {
-                recipient: addr.recipient,
-                phone: addr.phone,
-                addressLine: addr.address,
-                city: addr.regencies,
-                province: addr.province,
-                postalCode: addr.postal_code
-            };
+        const orderWithAddress = order as any;
+        if (orderWithAddress.address) {
+            shippingAddress = { recipient: orderWithAddress.address.recipient, phone: orderWithAddress.address.phone, addressLine: orderWithAddress.address.address, city: orderWithAddress.address.regencies, province: orderWithAddress.address.province, postalCode: orderWithAddress.address.postal_code };
         }
 
-        const responseData = {
-            ...orderJson,
-            invoiceNumber,
-            shippingAddress,
-            shipping_cost: parseFloat(order.shipping_cost as any),
-            original_shipping_cost: parseFloat(order.original_shipping_cost as any || order.shipping_cost as any),
-            discount: parseFloat(order.discount as any),
-            total_amount: parseFloat(order.total_amount as any),
-        };
-
-        // Prevent caching to ensure fresh review data
-        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-
-        res.json(responseData);
+        res.json({ 
+            ...orderJson, 
+            items, 
+            invoiceNumber, 
+            shippingAddress, 
+            biteship_order_id: order.biteship_order_id,
+            tracking_number: order.tracking_number,
+            shipping_cost: parseFloat(order.shipping_cost as any), 
+            total_amount: parseFloat(order.total_amount as any) 
+        });
     } catch (err: any) {
         console.error("❌ Error getOrderDetails:", err);
         res.status(500).json({ message: "Gagal mengambil detail order", error: err.message });
@@ -522,44 +447,16 @@ export const shipOrder = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { tracking_number } = req.body;
-
-        if (!tracking_number) {
-            return res.status(400).json({ message: "Nomor Resi wajib diisi" });
-        }
-
+        if (!tracking_number) return res.status(400).json({ message: "Nomor Resi wajib diisi" });
         const order = await Orders.findByPk(id as string);
-        if (!order) {
-            return res.status(404).json({ message: "Order tidak ditemukan" });
-        }
-
-        // if (order.status !== 'paid' && order.status !== 'processed') ... allow flexibility
+        if (!order) return res.status(404).json({ message: "Order tidak ditemukan" });
 
         order.status = "shipped";
         order.tracking_number = tracking_number;
         await order.save();
-
-        await OrderStatusHistory.create({
-            order_id: order.id,
-            status: "shipped",
-            note: `Pesanan dikirim. Resi: ${tracking_number}`,
-        });
-
-        // 3. Order Shipped Notification
-        await NotificationService.createNotification({
-            user_id: order.user_id,
-            title: "🚚 Paket Sedang Dikirim",
-            message: `Pesanan #${order.id} sedang dalam perjalanan. Resi: ${tracking_number}`,
-            type: "info",
-            category: "transaction",
-            status: "ongoing",
-            actionUrl: `/orders/${order.id}`,
-            metadata: { order_id: order.id, tracking_number }
-        });
-
-        res.json({
-            message: "Order berhasil dikirim (Shipped)",
-            order: order.toJSON()
-        });
+        await OrderStatusHistory.create({ order_id: order.id, status: "shipped", note: `Pesanan dikirim. Resi: ${tracking_number}` });
+        await NotificationService.createNotification({ user_id: order.user_id, title: "🚚 Paket Sedang Dikirim", message: `Pesanan #${order.id} sedang dalam perjalanan. Resi: ${tracking_number}`, type: "info", category: "transaction", status: "ongoing", actionUrl: `/orders/${order.id}`, metadata: { order_id: order.id, tracking_number } });
+        res.json({ message: "Order berhasil dikirim (Shipped)", order: order.toJSON() });
     } catch (err: any) {
         console.error("❌ Error shipOrder:", err);
         res.status(500).json({ message: "Gagal update status pengiriman", error: err.message });
@@ -570,34 +467,12 @@ export const completeOrder = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const order = await Orders.findByPk(id as string);
-
-        if (!order) {
-            return res.status(404).json({ message: "Order tidak ditemukan" });
-        }
-
+        if (!order) return res.status(404).json({ message: "Order tidak ditemukan" });
         order.status = "delivered";
         await order.save();
-
-        await OrderStatusHistory.create({
-            order_id: order.id,
-            status: "delivered",
-            note: "Pesanan diterima oleh pelanggan",
-        });
-
-        // 4. Order Delivered (Completed) Notification
-        await NotificationService.createNotification({
-            user_id: order.user_id,
-            title: "✅ Pesanan Telah Diterima",
-            message: `Terima kasih! Pesanan #${order.id} telah selesai. Jangan lupa beri ulasan ya!`,
-            type: "success",
-            category: "transaction",
-            status: "completed",
-            actionUrl: `/orders/${order.id}`,
-            metadata: { order_id: order.id }
-        });
-
+        await OrderStatusHistory.create({ order_id: order.id, status: "delivered", note: "Pesanan diterima oleh pelanggan" });
+        await NotificationService.createNotification({ user_id: order.user_id, title: "✅ Pesanan Telah Diterima", message: `Terima kasih! Pesanan #${order.id} telah selesai. Jangan lupa beri ulasan ya!`, type: "success", category: "transaction", status: "completed", actionUrl: `/orders/${order.id}`, metadata: { order_id: order.id } });
         res.json({ message: "Pesanan selesai (Diterima)" });
-
     } catch (err: any) {
         console.error("❌ Error completeOrder:", err);
         res.status(500).json({ message: "Gagal menyelesaikan pesanan", error: err.message });
@@ -606,96 +481,173 @@ export const completeOrder = async (req: Request, res: Response) => {
 
 export const getAllOrders = async (req: Request, res: Response) => {
     try {
-        // Prevent 304
         res.setHeader('Cache-Control', 'no-store');
 
-        console.log("Fetching all orders...");
-        const orders = await Orders.findAll({
-            include: [{
-                model: OrderItems,
-                as: "items"
-            }],
-            order: [["created_at", "DESC"]]
-        });
-        console.log(`Found ${orders.length} orders in DB`);
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const offset = (page - 1) * limit;
 
-        // Proactive Check for Pending Orders (Commented out for debug)
-        /*
-        for (const order of orders) {
-            if (order.status === "pending") {
-                try {
-                    const transaction = await Transaction.findOne({ where: { order_id: order.id } });
-                    if (transaction && transaction.invoice_number) {
-                        const status = await DokuService.checkTransactionStatus(transaction.invoice_number);
-                        if (status === "SUCCESS") {
-                            order.status = "paid";
-                            transaction.status = "success";
-                            await order.save();
-                            await transaction.save();
-                        } else if (status === "FAILED" || status === "EXPIRED") {
-                            transaction.status = "failed";
-                            await transaction.save();
-                        }
-                    }
-                } catch (e) {
-                    console.error("⚠️ Failed sync in getAllOrders:", e);
-                }
+        const status = req.query.status as string;
+        const searchQuery = req.query.q as string;
+        const paymentMethod = req.query.payment_method as string;
+        const dateFrom = req.query.date_from as string;
+        const dateTo = req.query.date_to as string;
+
+        // Build where clause for Orders
+        const whereClause: any = {};
+        if (status && status !== "all") {
+            whereClause.status = status;
+        }
+
+        if (paymentMethod && paymentMethod !== "all") {
+            whereClause.payment_method = paymentMethod;
+        }
+
+        if (dateFrom || dateTo) {
+            whereClause.created_at = {};
+            if (dateFrom) {
+                whereClause.created_at[Op.gte] = new Date(dateFrom);
+            }
+            if (dateTo) {
+                const toDate = new Date(dateTo);
+                toDate.setHours(23, 59, 59, 999);
+                whereClause.created_at[Op.lte] = toDate;
             }
         }
-        */
 
-        const formattedOrders = await Promise.all(orders.map(async (order: any) => {
+        // Build include options
+        const includeOptions: any[] = [
+            {
+                model: Users,
+                as: "user",
+                attributes: ["id", "name", "email", "no_telp"],
+            },
+            {
+                model: Address,
+                as: "address",
+            },
+            {
+                model: Transaction,
+                as: "transactions",
+                attributes: ["invoice_number", "status"],
+            },
+            {
+                model: OrderItems,
+                as: "items",
+                include: [
+                    {
+                        model: Products,
+                        as: "product",
+                        attributes: ["id", "name", "type", "front_image", "sku"],
+                    }
+                ]
+            }
+        ];
+
+        // Advanced Search (across multiple models)
+        if (searchQuery) {
+            whereClause[Op.or] = [
+                // Search by Invoice Number (Transaction model)
+                { '$transactions.invoice_number$': { [Op.iLike]: `%${searchQuery}%` } },
+                // Search by Customer Name
+                { '$user.name$': { [Op.iLike]: `%${searchQuery}%` } },
+                // Search by Customer Email
+                { '$user.email$': { [Op.iLike]: `%${searchQuery}%` } },
+                // Search by Order ID (direct)
+                { id: { [Op.iLike]: `%${searchQuery}%` } }
+            ];
+            // If searching in included models, we need to ensure they are joined properly
+            // Sequelize might need 'required: false' or careful placement if using $ syntax
+        }
+
+        const { count, rows: orders } = await Orders.findAndCountAll({
+            where: whereClause,
+            include: includeOptions,
+            limit: limit,
+            offset: offset,
+            order: [["created_at", "DESC"]],
+            distinct: true, 
+            subQuery: false 
+        });
+
+        // OPTIONAL: Calculate aggregate stats for the current filter (without pagination limit)
+        // This is needed for the dashboard cards
+        const allFilteredOrders = await Orders.findAll({
+            where: whereClause,
+            attributes: ['id', 'status', 'total_amount']
+        });
+
+        const stats = {
+            totalOrders: allFilteredOrders.length,
+            grossRevenue: allFilteredOrders
+                .filter(o => ["paid", "processing", "shipped", "delivered"].includes(o.status))
+                .reduce((sum, o) => sum + parseFloat(o.total_amount as any), 0),
+            netRevenue: allFilteredOrders
+                .filter(o => o.status === "delivered")
+                .reduce((sum, o) => sum + parseFloat(o.total_amount as any), 0),
+            statusCounts: {
+                pending: allFilteredOrders.filter(o => o.status === "pending").length,
+                paid: allFilteredOrders.filter(o => o.status === "paid").length,
+                processing: allFilteredOrders.filter(o => o.status === "processing").length,
+                shipped: allFilteredOrders.filter(o => o.status === "shipped").length,
+                delivered: allFilteredOrders.filter(o => o.status === "delivered").length,
+                cancelled: allFilteredOrders.filter(o => o.status === "cancelled").length,
+            }
+        };
+
+        const formattedOrders = orders.map((order: any) => {
             const orderJson = order.toJSON();
-            const userId = order.user_id;
+            const tx = orderJson.transactions && orderJson.transactions.length > 0 ? orderJson.transactions[0] : null;
 
-            const itemsWithProducts = await Promise.all(orderJson.items.map(async (item: any) => {
-                const product = await Products.findByPk(item.product_id, {
-                    attributes: ['id', 'name', 'slug', 'front_image', 'type', 'weight_gr']
-                });
-
-                let variant: any = null;
-                if (item.variant_id) {
-                    variant = await ProductVariants.findByPk(item.variant_id);
-                }
-
-                return {
-                    ...item,
-                    product: product ? product.toJSON() : null,
-                    variant: variant ? variant.toJSON() : null
-                };
-            }));
-
-            let invoiceNumber: string | null = null;
-            const transaction = await Transaction.findOne({ where: { order_id: order.id } });
-            if (transaction) {
-                invoiceNumber = transaction.invoice_number;
-            } else {
+            let invoiceNumber = tx?.invoice_number;
+            if (!invoiceNumber) {
                 const dateStr = new Date(order.created_at).toISOString().slice(0, 10).replace(/-/g, "");
                 const shortId = order.id.split("-")[0].toUpperCase();
                 invoiceNumber = `INV/${dateStr}/${shortId}`;
             }
 
-            const customer = await Users.findByPk(order.user_id, { attributes: ['id', 'name', 'email'] });
+            const items = (orderJson.items || []).map((item: any) => ({
+                id: item.id,
+                quantity: item.quantity,
+                price: parseFloat(item.price),
+                productName: item.product?.name || "Produk PE Skin",
+                productType: item.product?.type || "single",
+                productSku: item.product?.sku || "",
+                product: item.product
+            }));
 
             return {
-                ...orderJson,
-                items: itemsWithProducts,
-                invoiceNumber,
-                customerName: customer?.name || "Unknown",
-                customerEmail: customer?.email || "Unknown",
+                id: order.id,
+                orderNumber: invoiceNumber,
+                status: order.status,
+                date: order.created_at,
+                customerName: order.user?.name || "Guest",
+                customerEmail: order.user?.email || "",
+                customerPhone: order.user?.no_telp || order.address?.phone || "",
+                customerAddress: order.address ? `${order.address.address}, ${order.address.regencies || ''}, ${order.address.province || ''}` : "",
                 total_amount: parseFloat(order.total_amount),
                 shipping_cost: parseFloat(order.shipping_cost),
                 original_shipping_cost: parseFloat(order.original_shipping_cost || order.shipping_cost),
-                discount: parseFloat(order.discount),
-                expires_at: order.expires_at,
+                discount: parseFloat(order.discount || 0),
+                payment_method: (order as any).payment_method || "bank_transfer",
+                biteship_order_id: order.biteship_order_id,
+                tracking_number: order.tracking_number,
+                items
             };
-        }));
+        });
 
-        console.log(`Returning ${formattedOrders.length} formatted orders`);
-        res.json(formattedOrders);
+        res.json({
+            count,
+            rows: formattedOrders,
+            stats,
+            pagination: {
+                page,
+                limit,
+                totalPages: Math.ceil(count / limit)
+            }
+        });
     } catch (err: any) {
-        console.error("❌ Error getAllOrders:", err);
+        console.error("❌ Error in getAllOrders:", err);
         res.status(500).json({ message: "Gagal mengambil semua orders", error: err.message });
     }
 };
-

@@ -29,3 +29,31 @@ export const createReview = async (req: Request, res: Response) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const getAllReviews = async (req: Request, res: Response) => {
+    try {
+        const reviews = await ReviewService.getAllReviewsAdmin();
+        res.json({ success: true, data: reviews });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const deleteReview = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        await ReviewService.deleteReview(Number(id));
+        res.json({ success: true, message: "Ulasan berhasil dihapus" });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const createReviewByAdmin = async (req: Request, res: Response) => {
+    try {
+        const result = await ReviewService.createReviewAdmin(req.body);
+        res.status(201).json({ success: true, data: result });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

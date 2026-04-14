@@ -5,13 +5,21 @@ const router = express.Router();
 
 /**
  * @swagger
+ * tags:
+ *   name: Content & Support
+ *   description: Artikel blog, FAQ, Banner, Data Wilayah, dan Pengaturan Sistem.
+ */
+
+/**
+ * @swagger
  * /posts:
  *   get:
- *     summary: Get All Posts
- *     tags: [Article]
+ *     summary: Ambil Semua Artikel (Blog)
+ *     description: Mengambil daftar semua artikel blog yang sudah dipublikasikan di website.
+ *     tags: [Content & Support]
  *     responses:
  *       200:
- *         description: List of posts
+ *         description: Daftar artikel berhasil diambil.
  */
 router.get("/posts", PostController.getAllPosts);
 
@@ -19,8 +27,9 @@ router.get("/posts", PostController.getAllPosts);
  * @swagger
  * /posts/{id}:
  *   get:
- *     summary: Get Post by ID
- *     tags: [Article]
+ *     summary: Detail Artikel by ID
+ *     description: Mengambil isi lengkap sebuah artikel berdasarkan ID uniknya.
+ *     tags: [Content & Support]
  *     parameters:
  *       - in: path
  *         name: id
@@ -29,16 +38,38 @@ router.get("/posts", PostController.getAllPosts);
  *           type: integer
  *     responses:
  *       200:
- *         description: Post details
+ *         description: Data artikel berhasil ditemukan.
  */
 router.get("/posts/:id", PostController.getPostById);
 
 /**
  * @swagger
+ * /posts/slug/{slug}:
+ *   get:
+ *     summary: Detail Artikel by Slug
+ *     description: Mengambil isi lengkap sebuah artikel berdasarkan slug (URL-friendly name). Digunakan oleh website storefront.
+ *     tags: [Content & Support]
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Data artikel berhasil ditemukan.
+ */
+router.get("/posts/slug/:slug", PostController.getPostBySlug);
+
+/**
+ * @swagger
  * /posts:
  *   post:
- *     summary: Create New Post
- *     tags: [Article]
+ *     summary: Buat Artikel Baru (Admin)
+ *     description: Administrator dapat mempublikasikan artikel blog baru.
+ *     tags: [Content & Support]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       content:
  *         application/json:
@@ -46,17 +77,14 @@ router.get("/posts/:id", PostController.getPostById);
  *             type: object
  *             required: [title, content]
  *             properties:
- *               title:
- *                 type: string
- *               content:
- *                 type: string
- *               category_id:
- *                 type: integer
- *               author_id:
- *                 type: integer
+ *               title: { type: string }
+ *               content: { type: string, description: "Isi artikel dalam format HTML atau string." }
+ *               image_url: { type: string, description: "URL gambar utama artikel." }
+ *               category_id: { type: integer }
+ *               author_id: { type: integer }
  *     responses:
  *       201:
- *         description: Post created
+ *         description: Artikel berhasil dibuat.
  */
 router.post("/posts", PostController.createPost);
 
@@ -64,27 +92,19 @@ router.post("/posts", PostController.createPost);
  * @swagger
  * /posts/{id}:
  *   patch:
- *     summary: Update Post
- *     tags: [Article]
+ *     summary: Perbarui Artikel (Admin)
+ *     description: Mengubah isi atau judul artikel yang sudah ada.
+ *     tags: [Content & Support]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               title:
- *                 type: string
- *               content:
- *                 type: string
+ *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Post updated
+ *         description: Artikel berhasil diperbarui.
  */
 router.patch("/posts/:id", PostController.updatePost);
 
@@ -92,17 +112,19 @@ router.patch("/posts/:id", PostController.updatePost);
  * @swagger
  * /posts/{id}:
  *   delete:
- *     summary: Delete Post
- *     tags: [Article]
+ *     summary: Hapus Artikel (Admin)
+ *     description: Menghapus artikel blog dari sistem.
+ *     tags: [Content & Support]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: integer
+ *         schema: { type: integer }
  *     responses:
  *       200:
- *         description: Post deleted
+ *         description: Artikel berhasil dihapus.
  */
 router.delete("/posts/:id", PostController.deletePost);
 
