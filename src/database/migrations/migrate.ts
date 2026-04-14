@@ -44,13 +44,14 @@ export const syncDB = async () => {
         // await db.sync({ alter: true });
 
 
-        // Just test the connection instead
+    // Just test the connection instead
         const allUsers = await Users.findAll({ 
             attributes: ['id', 'email', 'name', 'is_google'],
             order: [['email', 'ASC']]
         });
-        const fs = require('fs');
-        fs.writeFileSync("e:\\Data_Kerja\\PESkinPro\\code\\backend\\peskinext_backend\\users_dump.json", JSON.stringify(allUsers, null, 2));
+        
+        // Removed hardcoded file write to avoid EROFS error on cloud deployment
+        console.log(`✅ DB Connection OK. Found ${allUsers.length} users.`);
     } catch (err) {
         console.error("❌ Database connection failed:", err);
     }
