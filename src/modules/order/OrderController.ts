@@ -584,7 +584,6 @@ export const getAllOrders = async (req: Request, res: Response) => {
             }) as any,
             // Revenue stats
             Orders.findAll({
-                where: whereClause,
                 attributes: [
                     [db.fn('SUM', db.col('total_amount')), 'grossRevenue'],
                     [db.fn('SUM', db.literal("CASE WHEN status = 'delivered' THEN total_amount ELSE 0 END")), 'netRevenue']
@@ -597,6 +596,7 @@ export const getAllOrders = async (req: Request, res: Response) => {
                 },
                 raw: true
             }) as any
+
         ]);
 
         // Format stats for dashboard
