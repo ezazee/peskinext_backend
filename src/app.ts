@@ -92,7 +92,7 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+            scriptSrc: ["'self'", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
             styleSrc: ["'self'", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:"],
             connectSrc: ["'self'", "https:"],
@@ -100,6 +100,7 @@ app.use(helmet({
     },
     crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow CORS
 }));
+
 app.use(hpp());
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
