@@ -33,6 +33,7 @@ RUN apk add --no-cache python3 make g++ && \
 
 # Copy the built assets from the builder stage
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/swagger.json ./swagger.json
 
 # Copy other necessary files
 COPY .env.example .env
