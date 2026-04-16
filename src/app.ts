@@ -89,17 +89,10 @@ app.set("trust proxy", 1);
 
 // Security Middlewares
 app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
-            styleSrc: ["'self'", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
-            imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https:"],
-        },
-    },
+    contentSecurityPolicy: false,
     crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow CORS
 }));
+
 
 app.use(hpp());
 const limiter = rateLimit({
@@ -151,16 +144,9 @@ try {
     console.warn("Could not load static swagger.json, falling back to runtime generation");
 }
 
-// Custom options to fix blank screen on Vercel/Serverless
-const swaggerOptions = {
-    customCssUrl: "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css",
-    customJs: [
-        "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.min.js",
-        "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.min.js",
-    ],
-};
+// Routes
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(finalSwaggerSpec));
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(finalSwaggerSpec, swaggerOptions));
 
 // Routes
 const apiV1 = express.Router();
