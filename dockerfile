@@ -1,15 +1,46 @@
+# Stage 1: Build
+FROM node:18-alpine AS builder
+
+# Install build dependencies for native modules (bcrypt, sharp, etc.) on Alpine
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# Copy dependency manifests
+COPY package*.json ./
+
+# Install dependencies including devDependencies for build
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Build the project (generates dist/)
+RUN npm run build
+
+# Stage 2: Runtime
 FROM node:18-alpine
 
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
 
-RUN npm install
+# Install only production dependencies
+RUN apk add --no-cache python3 make g++ && \
+    npm install --omit=dev && \
+    apk del python3 make g++
 
-COPY . .
+# Copy the built assets from the builder stage
+COPY --from=builder /app/dist ./dist
 
-RUN npm run build
+# Copy other necessary files
+COPY .env.example .env
 
-EXPOSE 5000
+# Set Port
+ENV PORT=8080
+
+# Non-root user for security
+USER node
 
 CMD ["npm", "start"]

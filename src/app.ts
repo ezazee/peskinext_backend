@@ -35,11 +35,12 @@ import FAQRoute from "./modules/faq/FAQRoutes";
 import FlashSaleRoute from "./modules/flash-sale/FlashSaleRoute";
 import db from "./config/database";
 
-// One-time Database Migration for Per-Variant Flash Sale
+// One-time Database Migration for Per-Variant Flash Sale & Performance Hardening
 const runMigrations = async () => {
     try {
         console.log("🚀 Running Database Migrations...");
-        // 1. Tambah kolom variant_id jika belum ada
+        
+        // 1. Tambah kolom variant_id jika belum ada (Biteship/Flash Sale Prep)
         await db.query(`ALTER TABLE flash_sale_items ADD COLUMN IF NOT EXISTS variant_id INTEGER;`);
         
         // 2. Hubungkan data lama ke varian pertama (agar tidak NULL)
@@ -51,13 +52,35 @@ const runMigrations = async () => {
         
         // 3. Set NOT NULL setelah data terisi
         await db.query(`ALTER TABLE flash_sale_items ALTER COLUMN variant_id SET NOT NULL;`);
+
+        // 4. PRODUCTION HARDENING: ADD INDEXES for performance
+        console.log("📈 Applying Performance Indexes...");
+        await db.query(`
+            -- Orders
+            CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+            CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+            CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
+            -- Products
+            CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku);
+            CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
+            -- Order Items
+            CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+            CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items(product_id);
+            -- Reviews
+            CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews(product_id);
+            -- Variants
+            CREATE INDEX IF NOT EXISTS idx_product_variants_product_id ON product_variants(product_id);
+            -- Flash Sale
+            CREATE INDEX IF NOT EXISTS idx_flash_sale_items_variant_id ON flash_sale_items(variant_id);
+        `);
         
-        console.log("✅ Migration Success: variant_id added to flash_sale_items");
+        console.log("✅ Migration Success: Database is optimized for production.");
     } catch (err: any) {
         console.error("❌ Migration Error:", err.message);
     }
 };
 runMigrations();
+
 
 const app: Express = express();
 
@@ -187,20 +210,43 @@ Sentry.setupExpressErrorHandler(app);
 
 // Global Error Handler
 app.use((err: any, req: Request, res: Response, next: any) => {
-    // Optional: Sentry ID in response
+    // Sentry Error ID
     // @ts-ignore
-    if (res.sentry) {
-        // @ts-ignore
-        console.error("Sentry Error ID:", res.sentry);
+    const sentryId = res.sentry;
+    if (sentryId) {
+        console.error("Sentry Error ID:", sentryId);
     }
 
-    console.error("Global Error Structure:", err);
-    res.status(err.status || 500).json({
+    // Log the error for debugging
+    console.error("❌ Global Backend Error:", {
+        message: err.message,
+        stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+        status: err.status || 500
+    });
+
+    // Determine status code
+    let statusCode = err.status || 500;
+    let message = err.message || "Something went wrong on our server.";
+    let errorCode = err.code || "INTERNAL_SERVER_ERROR";
+
+    // Handle Sequelize Errors
+    if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
+        statusCode = 400;
+        message = err.errors.map((e: any) => e.message).join(", ");
+        errorCode = "VALIDATION_ERROR";
+    }
+
+    res.status(statusCode).json({
         success: false,
-        error: err.message || "Internal Server Error",
-        // @ts-ignore
-        sentry_id: res.sentry
+        message: message,
+        data: null,
+        error: {
+            code: errorCode,
+            details: process.env.NODE_ENV === "development" ? err.stack : undefined,
+            sentry_id: sentryId
+        }
     });
 });
+
 
 export default app;

@@ -314,7 +314,7 @@ export const updateOrder = async (req: Request, res: Response) => {
 
         if (address_id !== undefined) order.address_id = address_id;
         if (courier !== undefined) order.courier = courier;
-        if (shipping_service !== undefined) (order as any).shipping_service = shipping_service;
+        if (shipping_service !== undefined) order.courier_service = shipping_service;
         if (shipping_cost !== undefined) order.shipping_cost = parseFloat(shipping_cost);
         if (original_shipping_cost !== undefined) order.original_shipping_cost = parseFloat(original_shipping_cost);
         if (discount !== undefined) order.discount = parseFloat(discount);
@@ -570,30 +570,55 @@ export const getAllOrders = async (req: Request, res: Response) => {
             subQuery: false 
         });
 
-        // OPTIONAL: Calculate aggregate stats for the current filter (without pagination limit)
-        // This is needed for the dashboard cards
-        const allFilteredOrders = await Orders.findAll({
-            where: whereClause,
-            attributes: ['id', 'status', 'total_amount']
-        });
+        // OPTIMIZED: Calculate aggregate stats using SQL aggregation instead of manual fetching
+        const [statusStats, revenueStats] = await Promise.all([
+            // Status counts
+            Orders.findAll({
+                where: whereClause,
+                attributes: [
+                    'status',
+                    [db.fn('COUNT', db.col('id')), 'count']
+                ],
+                group: ['status'],
+                raw: true
+            }) as any,
+            // Revenue stats
+            Orders.findAll({
+                where: whereClause,
+                attributes: [
+                    [db.fn('SUM', db.col('total_amount')), 'grossRevenue'],
+                    [db.fn('SUM', db.literal("CASE WHEN status = 'delivered' THEN total_amount ELSE 0 END")), 'netRevenue']
+                ],
+                // Only count revenue for valid statuses
+                // grossRevenue includes paid, processing, shipped, delivered
+                where: {
+                    ...whereClause,
+                    status: ['paid', 'processing', 'shipped', 'delivered']
+                },
+                raw: true
+            }) as any
+        ]);
+
+        // Format stats for dashboard
+        const statusMap = statusStats.reduce((acc: any, curr: any) => {
+            acc[curr.status] = parseInt(curr.count);
+            return acc;
+        }, {});
 
         const stats = {
-            totalOrders: allFilteredOrders.length,
-            grossRevenue: allFilteredOrders
-                .filter(o => ["paid", "processing", "shipped", "delivered"].includes(o.status))
-                .reduce((sum, o) => sum + parseFloat(o.total_amount as any), 0),
-            netRevenue: allFilteredOrders
-                .filter(o => o.status === "delivered")
-                .reduce((sum, o) => sum + parseFloat(o.total_amount as any), 0),
+            totalOrders: count,
+            grossRevenue: parseFloat(revenueStats[0]?.grossRevenue || 0),
+            netRevenue: parseFloat(revenueStats[0]?.netRevenue || 0),
             statusCounts: {
-                pending: allFilteredOrders.filter(o => o.status === "pending").length,
-                paid: allFilteredOrders.filter(o => o.status === "paid").length,
-                processing: allFilteredOrders.filter(o => o.status === "processing").length,
-                shipped: allFilteredOrders.filter(o => o.status === "shipped").length,
-                delivered: allFilteredOrders.filter(o => o.status === "delivered").length,
-                cancelled: allFilteredOrders.filter(o => o.status === "cancelled").length,
+                pending: statusMap['pending'] || 0,
+                paid: statusMap['paid'] || 0,
+                processing: statusMap['processing'] || 0,
+                shipped: statusMap['shipped'] || 0,
+                delivered: statusMap['delivered'] || 0,
+                cancelled: statusMap['cancelled'] || 0,
             }
         };
+
 
         const formattedOrders = orders.map((order: any) => {
             const orderJson = order.toJSON();

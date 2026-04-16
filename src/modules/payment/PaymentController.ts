@@ -71,8 +71,17 @@ export const createPayment = async (req: Request, res: Response) => {
 export const handleNotification = async (req: Request, res: Response) => {
     // DOKU sends notification here
 
-
     try {
+        // === SIGNATURE VERIFICATION ===
+        // Verify that this notification actually came from DOKU
+        const rawBody = JSON.stringify(req.body);
+        const isValid = DokuService.verifySignature(req.headers, rawBody);
+        
+        if (!isValid) {
+            console.error("❌ Payment notification rejected: Invalid signature");
+            return res.status(401).json({ message: "Invalid signature" });
+        }
+
         // Handle DOKU Checkout V2 (Jokul) Nested Structure
         let invoice_number = req.body.order?.invoice_number;
         let transaction_status = req.body.transaction?.status;

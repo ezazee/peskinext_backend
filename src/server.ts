@@ -16,9 +16,8 @@ const PORT = process.env.PORT || 5000;
     try {
         await syncDB();
         
-        // DISABLED ON BOOT: Takes ~30 seconds causing cloud proxy timeouts (Leapcell 9.8s limit).
-        // Settings are already seeded in the database anyway. Use npm run seedAll if needed.
-        // await seedInitialSettings();
+        await seedInitialSettings();
+
 
         // app.listen
         // @ts-ignore

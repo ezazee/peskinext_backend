@@ -36,12 +36,10 @@ import FlashSaleItems from "../../modules/flash-sale/models/FlashSaleItemModel";
 export const syncDB = async () => {
     try {
         // Order matters for constraints
-        // DISABLED: db.sync runs on every restart and is very slow
-        // Only enable this when you need to update database schema
-        // console.log("⚙️  Syncing database schema (please wait, do not stop)...");
-        // await db.sync({ alter: true }); // Use alter instead of force to preserve data
-        // console.log("✅ Database schema sync complete!");
-        // await db.sync({ alter: true });
+        console.log("⚙️  Syncing database schema (please wait, do not stop)...");
+        await db.sync({ alter: true }); // Use alter instead of force to preserve data
+        console.log("✅ Database schema sync complete!");
+
 
 
     // Just test the connection instead

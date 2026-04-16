@@ -165,6 +165,91 @@ export const checkTransactionStatus = async (invoiceNumber: string): Promise<str
     }
 };
 
+/**
+ * Verify DOKU notification webhook signature (HMAC-SHA256).
+ * 
+ * DOKU sends these headers with each notification:
+ * - Client-Id
+ * - Request-Id
+ * - Request-Timestamp
+ * - Signature (format: "HMACSHA256=<base64>")
+ * 
+ * The signature is computed over:
+ *   Client-Id + "\n" + Request-Id + "\n" + Request-Timestamp + "\n" + Request-Target + "\n" + Digest
+ * where Digest = SHA256(body) in base64.
+ */
 export const verifySignature = (headers: any, body: string): boolean => {
-    return true;
+    try {
+        const { secretKey, clientId } = getDokuEnvConfig();
+
+        if (!secretKey || !clientId) {
+            console.error("❌ DOKU verifySignature: Missing secretKey or clientId in env");
+            return false;
+        }
+
+        const signatureHeader = headers['signature'] || headers['Signature'];
+        const requestId = headers['request-id'] || headers['Request-Id'];
+        const requestTimestamp = headers['request-timestamp'] || headers['Request-Timestamp'];
+        const incomingClientId = headers['client-id'] || headers['Client-Id'];
+
+        if (!signatureHeader || !requestId || !requestTimestamp) {
+            console.error("❌ DOKU verifySignature: Missing required headers");
+            return false;
+        }
+
+        // Verify Client-Id matches our config
+        if (incomingClientId && incomingClientId !== clientId) {
+            console.error("❌ DOKU verifySignature: Client-Id mismatch");
+            return false;
+        }
+
+        // Extract the base64 signature from "HMACSHA256=<base64>"
+        const signatureParts = signatureHeader.split('=');
+        if (signatureParts.length < 2 || !signatureParts[0]?.startsWith('HMACSHA256')) {
+            console.error("❌ DOKU verifySignature: Invalid signature format");
+            return false;
+        }
+        // Rejoin in case base64 contains '='
+        const incomingSignature = signatureParts.slice(1).join('=');
+
+        // Compute digest of the raw body
+        const digest = crypto.createHash('sha256').update(body || '').digest('base64');
+
+        // Notification target path
+        const targetPath = '/api/v1/payment/notification';
+
+        // Reconstruct the signature component string
+        const rawSignature = [
+            `Client-Id:${clientId}`,
+            `Request-Id:${requestId}`,
+            `Request-Timestamp:${requestTimestamp}`,
+            `Request-Target:${targetPath}`,
+            `Digest:${digest}`
+        ].join('\n');
+
+        // Compute expected HMAC
+        const hmac = crypto.createHmac('sha256', secretKey);
+        hmac.update(rawSignature);
+        const expectedSignature = hmac.digest('base64');
+
+        // Time-safe comparison to prevent timing attacks
+        const expected = Buffer.from(expectedSignature, 'base64');
+        const incoming = Buffer.from(incomingSignature, 'base64');
+
+        if (expected.length !== incoming.length) {
+            console.error("❌ DOKU verifySignature: Signature length mismatch");
+            return false;
+        }
+
+        const isValid = crypto.timingSafeEqual(expected, incoming);
+
+        if (!isValid) {
+            console.error("❌ DOKU verifySignature: Signature mismatch — possible tampering!");
+        }
+
+        return isValid;
+    } catch (error) {
+        console.error("❌ DOKU verifySignature exception:", error);
+        return false;
+    }
 };

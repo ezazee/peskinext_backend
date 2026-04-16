@@ -15,12 +15,16 @@
     "seedReview": "ts-node src/database/seeders/seedReviews.ts",
     "seedBanner": "ts-node src/database/seeders/seedBanners.ts",
     "seedOrderItems": "ts-node src/modules/order/seeders/seedOrderItems.ts",
-    "seedAll": "ts-node src/scripts/seedAll.ts"
+    "seedAll": "ts-node src/scripts/seedAll.ts",
+    "db:purge": "ts-node src/scripts/purge-db.ts"
   },
+
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1030.0",
+    "@aws-sdk/lib-storage": "^3.1030.0",
     "@getbrevo/brevo": "^3.0.1",
     "@sentry/node": "^10.38.0",
     "@types/uuid": "^10.0.0",
@@ -36,7 +40,7 @@
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.1",
     "morgan": "^1.10.0",
-    "multer": "^1.4.4-lts.1",
+    "multer": "^2.1.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "pg": "^8.16.3",
